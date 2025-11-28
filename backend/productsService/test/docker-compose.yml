@@ -1,20 +1,44 @@
 version: '3'
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: docker.dockerfile
     container_name: laravel_app
     volumes:
-      - .:/var/www/html
+      - .:/var/www/http
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5433
+      DB_DATABASE: microservices-db
+      DB_USERNAME: postgres
+      DB_PASSWORD: 0000
 
   db:
-    image: mysql:8.0
+    image: postgres:16
     container_name: laravel_db
     environment:
-      MYSQL_DATABASE: crud_db
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_DB: microservices-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 0000
     ports:
-      - "3306:3306"
+      - "5433:5433"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
