@@ -1,0 +1,10 @@
+.env
+*/.env
+**/.env
+**/target/
+venv/
+__pycache__/
+.vscode/
+backend/authservice/app/_pycache_
+backend/authservice/app/routers/_pycache_
+backend/authservice/envauth
