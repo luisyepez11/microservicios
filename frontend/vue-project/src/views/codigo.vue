@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
-// Props
 const props = defineProps({
   show: {
     type: Boolean,
@@ -13,10 +12,8 @@ const props = defineProps({
   }
 })
 
-// Emits
 const emit = defineEmits(['close', 'verified'])
 
-// Estado reactivo
 const codigo = ref('')
 const ingresarCodigo = ref('')
 const errorCodigo = ref('')
@@ -25,14 +22,12 @@ const tiempoRestante = ref(60)
 const codigoExpirado = ref(false)
 let intervalId = null
 
-// Computed
 const tiempoFormateado = computed(() => {
   const m = Math.floor(tiempoRestante.value / 60).toString().padStart(2, '0')
   const s = (tiempoRestante.value % 60).toString().padStart(2, '0')
   return `${m}:${s}`
 })
 
-// Métodos
 const generarCodigo = () => {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
@@ -79,7 +74,6 @@ const startTimer = () => {
 }
 
 const inicializarModal = async () => {
-  // Resetear estado
   codigo.value = generarCodigo()
   tiempoRestante.value = 60
   codigoExpirado.value = false
@@ -87,10 +81,8 @@ const inicializarModal = async () => {
   errorCodigo.value = ''
   mensaje.value = ''
   
-  // Enviar código por correo
   await enviarCodigoCorreo()
   
-  // Iniciar timer
   startTimer()
 }
 
@@ -143,25 +135,20 @@ const resetModal = () => {
   }
 }
 
-// Cerrar modal con ESC
 const handleKeydown = (e) => {
   if (e.key === 'Escape' && props.show) {
     closeModal()
   }
 }
 
-// Watcher para cuando el modal se abre
 watch(() => props.show, async (newVal) => {
   if (newVal) {
-    // El modal se abrió, inicializar
     await inicializarModal()
   }
 })
 
-// Lifecycle
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-  // No inicializamos aquí, solo cuando el modal se abra
 })
 
 onUnmounted(() => {

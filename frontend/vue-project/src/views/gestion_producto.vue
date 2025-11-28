@@ -37,6 +37,16 @@ cargar()
       <NavBar></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+              <div class="flex justify-end px-4 mb-4">
+              <router-link to="/add-product">
+          <button
+            class="px-4 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition shadow-sm hover:shadow-md"
+          >
+            + Agregar Producto
+          </button>
+          </router-link>
+        </div>
+
         <div class="grid px-4 py-6 sm:px-0 grid-cols-4 gap-6">
           <Card textoBoton="modificar"></Card>
         </div>

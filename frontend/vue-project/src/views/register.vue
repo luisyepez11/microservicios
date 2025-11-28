@@ -29,7 +29,7 @@ const handleClose = () => {
 const handleVerified = async () => {
   console.log('Código verificado correctamente')
   try {
-    const res = await fetch('http://localhost:8001/usuarios', { //CAMBIAR RUTA
+    const res = await fetch('http://localhost:8001/usuarios', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

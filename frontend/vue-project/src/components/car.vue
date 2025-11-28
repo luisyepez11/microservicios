@@ -132,20 +132,20 @@ onUnmounted(() => {
         leave-to-class="opacity-0 scale-95"
       >
         <div
-          class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+          class="w-full max-w-xl bg-slate-900 text-slate-100 rounded-2xl shadow-2xl overflow-hidden border border-slate-700"
         >
           <!-- Header -->
-          <div class="bg-slate-800 text-white p-6">
+          <div class="bg-slate-800 border-b border-slate-700 p-6">
             <div class="flex justify-between items-center">
               <div>
                 <h2 class="text-2xl font-bold">{{ titulo }}</h2>
-                <p class="text-slate-300 mt-1">
+                <p class="text-sm text-slate-400 mt-1">
                   {{ cantidadTotal }} producto{{ cantidadTotal !== 1 ? 's' : '' }} en total
                 </p>
               </div>
               <button
                 @click="closeModal"
-                class="text-slate-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-700"
+                class="text-slate-400 hover:text-slate-100 transition-colors p-2 rounded-lg hover:bg-slate-700"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -161,21 +161,24 @@ onUnmounted(() => {
               v-if="productos.length === 0"
               class="text-center py-12 text-slate-500"
             >
-              <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-16 h-16 mx-auto text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
-              <p class="text-lg">No hay productos en el carrito</p>
+              <p class="text-lg text-slate-300">No hay productos en el carrito</p>
             </div>
 
             <!-- Lista de productos -->
-            <div v-else class="divide-y divide-slate-200">
+            <div v-else class="divide-y divide-slate-800">
               <div
                 v-for="(producto, index) in productos"
                 :key="producto.id || index"
-                class="p-4 hover:bg-slate-50 transition-colors"
-                :class="{
-                  'bg-blue-50 border-l-4 border-blue-500': productoSeleccionado?.id === producto.id
-                }"
+                class="p-4 transition-colors"
+                :class="[
+                  'hover:bg-slate-800/80',
+                  productoSeleccionado?.id === producto.id
+                    ? 'bg-slate-800 border-l-4 border-emerald-500'
+                    : 'bg-slate-900'
+                ]"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-4 flex-1">
@@ -183,14 +186,11 @@ onUnmounted(() => {
                     <div class="flex-1">
                       <div class="flex justify-between items-start">
                         <div>
-                          <h3 class="font-semibold text-slate-900">{{ producto.nombre }}</h3>
-                          <p v-if="producto.descripcion" class="text-sm text-slate-600 mt-1">
-                            {{ producto.descripcion }}
-                          </p>
+                          <h3 class="font-semibold text-slate-100">{{ producto.nombre }}</h3>
                         </div>
                         <button
                           @click="eliminarProducto(producto)"
-                          class="text-slate-400 hover:text-red-500 transition-colors p-1"
+                          class="text-slate-500 hover:text-red-400 transition-colors p-1"
                           title="Eliminar producto"
                         >
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,14 +202,14 @@ onUnmounted(() => {
                       <div class="flex items-center justify-between mt-3">
                         <!-- Controles de cantidad -->
                         <div class="flex items-center space-x-3">
-                          <span class="text-sm text-slate-600 font-medium">Cantidad:</span>
-                          <div class="flex items-center border border-slate-300 rounded-lg">
+                          <span class="text-sm text-slate-400 font-medium">Cantidad:</span>
+                          <div class="flex items-center border border-slate-600 rounded-lg bg-slate-900">
                             <button
                               @click="decrementarCantidad(producto)"
-                              class="px-3 py-1 text-slate-600 hover:bg-slate-100 transition-colors rounded-l-lg"
+                              class="px-3 py-1 text-slate-300 hover:bg-slate-800 transition-colors rounded-l-lg"
                               :disabled="producto.cantidad <= 1"
                               :class="{
-                                'opacity-50 cursor-not-allowed': producto.cantidad <= 1
+                                'opacity-40 cursor-not-allowed': producto.cantidad <= 1
                               }"
                             >
                               -
@@ -219,11 +219,11 @@ onUnmounted(() => {
                               :value="producto.cantidad"
                               @change="actualizarCantidad(producto, $event)"
                               min="1"
-                              class="w-12 text-center border-x border-slate-300 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                              class="w-12 text-center border-x border-slate-600 py-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                             <button
                               @click="incrementarCantidad(producto)"
-                              class="px-3 py-1 text-slate-600 hover:bg-slate-100 transition-colors rounded-r-lg"
+                              class="px-3 py-1 text-slate-300 hover:bg-slate-800 transition-colors rounded-r-lg"
                             >
                               +
                             </button>
@@ -232,10 +232,10 @@ onUnmounted(() => {
 
                         <!-- Precios -->
                         <div class="text-right">
-                          <div class="text-sm text-slate-500">
+                          <div class="text-sm text-slate-400">
                             {{ formatearPrecio(producto.precio) }} c/u
                           </div>
-                          <div class="text-lg font-bold text-blue-600">
+                          <div class="text-lg font-bold text-emerald-400">
                             {{ formatearPrecio(producto.precio * producto.cantidad) }}
                           </div>
                         </div>
@@ -250,22 +250,24 @@ onUnmounted(() => {
           <!-- Footer con total -->
           <div 
             v-if="productos.length > 0"
-            class="bg-slate-50 border-t border-slate-200 p-6"
+            class="bg-slate-900 border-t border-slate-800 p-6"
           >
             <div class="flex justify-between items-center">
               <div>
-                <p class="text-slate-600">Total ({{ cantidadTotal }} productos)</p>
-                <p class="text-2xl font-bold text-slate-900">{{ formatearPrecio(total) }}</p>
+                <p class="text-sm text-slate-400">
+                  Total ({{ cantidadTotal }} producto{{ cantidadTotal !== 1 ? 's' : '' }})
+                </p>
+                <p class="text-2xl font-bold text-slate-100">{{ formatearPrecio(total) }}</p>
               </div>
               <div class="space-x-3">
                 <button
                   @click="closeModal"
-                  class="px-6 py-2 rounded-lg font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
+                  class="px-6 py-2 rounded-lg font-semibold text-slate-200 bg-slate-800 border border-slate-600 hover:bg-slate-700 transition-colors"
                 >
                   Continuar comprando
                 </button>
                 <button
-                  class="px-6 py-2 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors"
+                  class="px-6 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition-colors shadow-sm hover:shadow-md"
                 >
                   Finalizar compra
                 </button>
@@ -276,11 +278,11 @@ onUnmounted(() => {
           <!-- Footer sin productos -->
           <div 
             v-else
-            class="bg-slate-50 border-t border-slate-200 p-6"
+            class="bg-slate-900 border-t border-slate-800 p-6"
           >
             <button
               @click="closeModal"
-              class="w-full px-6 py-2 rounded-lg font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
+              class="w-full px-6 py-2 rounded-lg font-semibold text-slate-200 bg-slate-800 border border-slate-600 hover:bg-slate-700 transition-colors"
             >
               Continuar comprando
             </button>

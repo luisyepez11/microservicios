@@ -23,6 +23,33 @@ const productos = ref([
     cantidad: 1,
     categoria: "Hogar",
     stock: 5
+  },
+  {
+    id: 3,
+    nombre: "Producto Ejemplo 3", 
+    descripcion: "Descripción del producto 2",
+    precio: 49.99,
+    cantidad: 1,
+    categoria: "Hogar",
+    stock: 5
+  },
+  {
+    id: 4,
+    nombre: "Producto Ejemplo 4", 
+    descripcion: "Descripción del producto 2",
+    precio: 49.99,
+    cantidad: 1,
+    categoria: "Hogar",
+    stock: 5
+  },
+  {
+    id: 5,
+    nombre: "Producto Ejemplo 5", 
+    descripcion: "Descripción del producto 2",
+    precio: 49.99,
+    cantidad: 1,
+    categoria: "Hogar",
+    stock: 5
   }
 ])
 
