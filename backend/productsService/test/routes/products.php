@@ -13,13 +13,35 @@ Route::get('/Products/{id}', function ($id) {
     return $productsService->getProduct($id);
 })->whereNumber('id');
 
-Route::get('/Products/Category/{category_id}', function () {
+Route::get('/Products/Category/{category_id}', function ($category_id) {
     $productsService = new ProductsService();
     return $productsService->getProductsByCategory($category_id);
 })->whereNumber('category_id');
 
-Route::get('/Products/Category/id', function () {
-    return 'Products by Category';
+Route::post('/newProduct', function () {
+    $productsService = new ProductsService();
+    $name = request('name');
+    $category_id = request('category_id');
+    $price = request('price');
+    $description = request('description');
+    $image_url = request('image_url');
+
+    return $productsService->createProduct($name, $category_id, $price, $description, $image_url);
 });
 
+Route::put('/updateProduct/{id}', function ($id) {
+    $productsService = new ProductsService();
+    $name = request('name');
+    $category_id = request('category_id');
+    $price = request('price');
+    $description = request('description');
+    $image_url = request('image_url');
+
+    return $productsService->updateProduct($id, $name, $category_id, $price, $description, $image_url);
+})->whereNumber('id');
+
+Route::delete('/deleteProduct/{id}', function ($id) {
+    $productsService = new ProductsService();
+    return $productsService->deleteProduct($id);
+})->whereNumber('id');
 ?>
