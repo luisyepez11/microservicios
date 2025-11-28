@@ -34,7 +34,7 @@ Este microservicio se encarga de la centralización de la identidad de los usuar
   * **Framework Web:** FastAPI
   * **Servidor ASGI:** Uvicorn
   * **Base de Datos:** PostgreSQL 15
-  * **ORM:** SQLAlchemy [cite: 4]
+  * **ORM:** SQLAlchemy
   * **Validación de Datos:** Pydantic
   * **Seguridad:** Python-Jose (JWT), Passlib (Argon2), OAuth2 Password Bearer
   * **Infraestructura:** Docker, Docker Compose
@@ -73,7 +73,7 @@ El proyecto está configurado para ejecutarse en contenedores, orquestando la ap
 
 ### Estructura de Archivos Docker
 
-  * **Dockerfile:** Utiliza la imagen base `python:3.11-slim`. [cite\_start]Instala dependencias del sistema (`gcc`, `libpq-dev`) necesarias para `psycopg2` y el entorno de Python[cite: 1, 2].
+  * **Dockerfile:** Utiliza la imagen base `python:3.11-slim`. Instala dependencias del sistema (`gcc`, `libpq-dev`) necesarias para `psycopg2` y el entorno de Python.
   * **docker-compose.yml:** Define dos servicios:
       * `app`: La aplicación FastAPI (Puerto host: 8001).
       * `db`: Base de datos PostgreSQL 15 (Puerto host: 5442).
@@ -97,7 +97,7 @@ Las siguientes variables son necesarias para la conexión a base de datos, segur
 | `RESEND_API_KEY` | API Key para servicio de emails | `re_...` |
 | `RESEND_FROM_EMAIL` | Remitente de correos | `onboarding@resend.dev` |
 
-> [cite\_start]**Nota:** El archivo `.env` está excluido del control de versiones por seguridad[cite: 3].
+> **Nota:** El archivo `.env` está excluido del control de versiones por seguridad.
 
 -----
 
