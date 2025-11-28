@@ -7,3 +7,5 @@ Route::get('/', function () {
 });
 
 require __DIR__.'/products.php';
+require __DIR__.'/categories.php';
+require __DIR__.'/cart.php';
