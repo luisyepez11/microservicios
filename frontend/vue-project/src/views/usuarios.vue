@@ -27,48 +27,59 @@ cargar()
 </script>
 
 <template>
-<div class="min-h-screen bg-gray-100 flex">
+  <div class="min-h-screen bg-slate-900 flex text-slate-100">
     <!-- Sidebar -->
     <sideBar></sideBar>
     <!-- Main Content -->
     <div class="flex-1 ml-40">
-        <!-- Navbar -->
-        
-        <NavBar></NavBar>
-        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-            <table class="min-w-full border-2 border-gray-300 rounded-lg overflow-hidden shadow-md">
-    <thead class="bg-gray-100 border-b-2 border-gray-300">
-        <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+      <!-- Navbar -->
+      <NavBar></NavBar>
+
+      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <table
+          class="min-w-full border border-slate-700 rounded-lg overflow-hidden shadow-xl bg-slate-800/80"
+        >
+          <thead class="bg-slate-900/80 border-b border-slate-700">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+              >
                 Encabezado 1
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+              >
                 Encabezado 2
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+              >
                 Encabezado 3
-            </th>
-        </tr>
-    </thead>
-    <tbody class="bg-white divide-y divide-gray-200">
-        <tr class="hover:bg-gray-50 transition duration-150" v-for="usuario in usuarios">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{usuario.correo_usuario}}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{(usuario.fecha_creacion.split("T"))[0]}}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-150 font-medium shadow-sm hover:shadow-md">ver</button>
-            </td>
-        </tr>
-    </tbody>
-</table>
-        </main>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700">
+            <tr
+              class="bg-slate-900/70 hover:bg-slate-800 transition duration-150"
+              v-for="usuario in usuarios"
+            >
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                {{ usuario.correo_usuario }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                {{ (usuario.fecha_creacion.split('T'))[0] }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                <button
+                  class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg hover:bg-emerald-400 active:scale-[0.98] transition duration-150 font-semibold shadow-sm hover:shadow-md"
+                >
+                  ver
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </main>
     </div>
-</div>
+  </div>
 </template>
-
-<style>
-
-</style>

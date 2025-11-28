@@ -123,8 +123,9 @@ const cargar = async () => {
 }
 cargar()
 </script>
+
 <template>
-  <div class="min-h-screen bg-gray-100 flex">
+  <div class="min-h-screen bg-slate-900 flex text-slate-100">
     <sideBar></sideBar>
     
     <div class="flex-1 ml-40">
@@ -132,20 +133,27 @@ cargar()
       
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
-          <h1 class="text-2xl font-bold text-gray-900 mb-6">Añadir Producto</h1>
+          <h1 class="text-2xl font-bold text-slate-100 mb-6">Añadir Producto</h1>
           
-          <div class="bg-white shadow-md rounded-lg p-6">
+          <div class="bg-slate-800/80 shadow-xl rounded-2xl p-6 border border-slate-700">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              <!-- Lado imagen -->
               <div class="flex flex-col items-center">
-                <div class="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                <div
+                  class="w-80 h-80 bg-slate-900 border border-slate-700 rounded-xl flex items-center justify-center mb-4 overflow-hidden"
+                >
                   <img 
                     v-if="imagePreview" 
                     :src="imagePreview" 
                     alt="Vista previa" 
                     class="w-full h-full object-cover"
                   >
-                  <span v-else class="text-gray-500 text-center p-4">Imagen del Producto</span>
+                  <span v-else class="text-slate-500 text-center p-4">
+                    Imagen del Producto
+                  </span>
                 </div>
+
                 <input 
                   type="file" 
                   ref="fileInput"
@@ -154,29 +162,30 @@ cargar()
                   accept="image/*"
                 >
                 <button 
-                  class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                  class="px-4 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition shadow-sm hover:shadow-md"
                   @click="triggerFileInput"
                 >
                   Subir Imagen
                 </button>
               </div>
               
+              <!-- Lado formulario -->
               <div class="space-y-6">
                 <div>
-                  <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="nombre" class="block text-sm font-medium text-slate-200 mb-1">
                     Nombre Producto:
                   </label>
                   <input 
                     type="text" 
                     id="nombre" 
                     v-model="producto.nombre"
-                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-sm py-2 px-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     placeholder="Ingrese el nombre del producto"
                   >
                 </div>
                 
                 <div>
-                  <label for="precio" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="precio" class="block text-sm font-medium text-slate-200 mb-1">
                     Precio Producto:
                   </label>
                   <input 
@@ -185,13 +194,13 @@ cargar()
                     v-model="producto.precio"
                     step="0.01" 
                     min="0"
-                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-sm py-2 px-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     placeholder="0.00"
                   >
                 </div>
                 
                 <div>
-                  <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="cantidad" class="block text-sm font-medium text-slate-200 mb-1">
                     Cantidad de ingresos de Producto:
                   </label>
                   <input 
@@ -199,33 +208,34 @@ cargar()
                     id="cantidad" 
                     v-model="producto.cantidad"
                     min="0"
-                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-sm py-2 px-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     placeholder="0"
                   >
                 </div>
                 
                 <div>
-                  <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="descripcion" class="block text-sm font-medium text-slate-200 mb-1">
                     Descripción:
                   </label>
                   <textarea 
                     id="descripcion" 
                     rows="4"
                     v-model="producto.descripcion"
-                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full rounded-md border border-slate-700 bg-slate-900 text-slate-100 shadow-sm py-2 px-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     placeholder="Ingrese la descripción del producto"
                   ></textarea>
                 </div>
                 
                 <div class="pt-4 flex justify-center">
                   <button 
-                    class="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md font-medium"
+                    class="px-6 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition shadow-sm hover:shadow-md"
                     @click="guardarProducto"
                   >
                     Guardar Producto
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -233,7 +243,3 @@ cargar()
     </div>
   </div>
 </template>
-
-
-<style>
-</style>

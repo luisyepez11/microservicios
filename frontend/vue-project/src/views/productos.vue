@@ -27,23 +27,20 @@ cargar()
 </script>
 
 <template>
-<div class="min-h-screen bg-gray-100 flex">
+  <div class="min-h-screen bg-slate-900 flex text-slate-100">
     <!-- Sidebar -->
     <sideBar></sideBar>
+
     <!-- Main Content -->
     <div class="flex-1 ml-40">
-        <!-- Navbar -->
-        
-        <NavBar></NavBar>
-        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-            <div class="grid px-4 py-6 sm:px-0 grid-cols-4">
-            <Card></Card>
-            </div>
-        </main>
+      <!-- Navbar -->
+      <NavBar></NavBar>
+
+      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="grid px-4 py-6 sm:px-0 grid-cols-4 gap-6">
+          <Card></Card>
+        </div>
+      </main>
     </div>
-</div>
+  </div>
 </template>
-
-<style>
-
-</style>
