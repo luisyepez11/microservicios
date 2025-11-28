@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import Codigo from './codigo.vue'
 const router = useRouter()
 
 const email = ref('')
@@ -14,6 +15,42 @@ const errorContrasena = ref('')
 const errorConfirmarContrasena = ref('')
 const backendError = ref('')
 const mensajeCompletado = ref('')
+const showModal = ref(false)
+
+const openModal = () => {
+  showModal.value = true
+}
+
+const handleClose = () => {
+  console.log('Modal cerrado')
+  showModal.value = false
+}
+
+const handleVerified = async () => {
+  console.log('Código verificado correctamente')
+  try {
+    const res = await fetch('http://localhost:8001/usuarios', { //CAMBIAR RUTA
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        correo_usuario: email.value,
+        contraseña_usuario: contrasena.value,
+      }),
+    })
+
+    if (!res.ok) {
+      backendError.value = 'No se pudo registrar el usuario (quizás ya exista).'
+      return
+    }
+
+    mensajeCompletado.value = 'Usuario registrado correctamente. Revisa tu correo para el código.'
+    router.push('/')
+  } catch (err) {
+    backendError.value = 'Error al conectar con el servidor.'
+  }
+}
 
 const validarEmail = (value) => {
   if (!value) {
@@ -65,33 +102,18 @@ const onSubmit = async () => {
 
   const valido = validarFormulario()
   if (!valido) return
+  openModal()
 
-  try {
-    const res = await fetch('http://localhost:8001/usuarios', { //CAMBIAR RUTA
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        correo_usuario: email.value,
-        contraseña_usuario: contrasena.value,
-      }),
-    })
-
-    if (!res.ok) {
-      backendError.value = 'No se pudo registrar el usuario (quizás ya exista).'
-      return
-    }
-
-    mensajeCompletado.value = 'Usuario registrado correctamente. Revisa tu correo para el código.'
-    router.push('/codigo')
-  } catch (err) {
-    backendError.value = 'Error al conectar con el servidor.'
-  }
 }
 </script>
 
 <template>
+  <Codigo 
+      :show="showModal" 
+      @close="handleClose"
+      @verified="handleVerified"
+      :correo="email"
+    />
     <div class="min-h-screen bg-slate-900 flex items-center justify-center">
   <div class="w-full max-w-md bg-slate-800/80 rounded-2xl shadow-xl p-8 text-slate-100">
     <h1 class="text-2xl font-semibold mb-2 text-center">Registro</h1>
