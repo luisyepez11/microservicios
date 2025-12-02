@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios';
 import Car from './car.vue' // Ajusta la ruta según tu estructura
 
 // Estados para el carrito
@@ -52,7 +53,7 @@ const productos = ref([
     stock: 5
   }
 ])
-
+let permiso = ref({})
 // Métodos del carrito
 const openModal = () => {
   showModal.value = true
