@@ -13,7 +13,7 @@ use sqlx::{FromRow, PgPool, pool, postgres::PgPoolOptions, query};
 #[tokio::main]
 async fn main() {
     // 1. Configuración DB
-    let database_url = "postgres://postgres:v11g06tr@db:5432/stock_api";
+    let database_url = "postgres://postgres:prueba123@db:5432/stock_api";
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(3))
