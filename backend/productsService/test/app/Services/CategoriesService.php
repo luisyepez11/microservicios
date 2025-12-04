@@ -37,6 +37,13 @@ class CategoriesService{
         ->get();
     }
 
+    public function getCategory($id){
+        return DB::table('categories')
+        ->select('category_id', 'name')
+        ->where('category_id', $id)
+        ->first();
+    }
+
     public function editCategory($id, $name){
         return DB::table('categories')->where('category_id', $id)->update([
             'name' => $name,

@@ -8,6 +8,11 @@ Route::get('/categories', function () {
     return $categoriesService->getCategories();
 });
 
+Route::get('/categories/{id}', function ($id) {
+    $categoriesService = new CategoriesService();
+    return $categoriesService->getCategory($id);
+})->whereNumber('id');
+
 Route::post('/newCategory', function () {
     $categoriesService = new CategoriesService();
     $name = request('name');

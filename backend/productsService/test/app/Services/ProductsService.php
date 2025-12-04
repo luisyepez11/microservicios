@@ -59,7 +59,10 @@ class ProductsService{
 
     //Will extract product details from the products table
     public function getProduct($id){
-        return DB::table('products')->where('product_id', $id)->first();
+        return DB::table('products')
+        ->select('product_id', 'category_id', 'name', 'description', 'image_url', 'price')
+        ->where('product_id', $id)
+        ->first();
     }
 
     public function updateProduct($id, $name, $category_id, $price, $description, $image_url){
@@ -73,11 +76,17 @@ class ProductsService{
     }
 
     public function getProductsByCategory($category_id){
-        return DB::table('products')->where('category_id', $category_id)->get();
+        return DB::table('products')
+        ->select('product_id', 'category_id', 'name', 'description', 'image_url', 'price')
+        ->where('category_id', $category_id)
+        ->get();
     }
 
     public function getProductsByName($name){
-        return DB::table('products')->where('name', 'like', '%' . $name . '%')->get();
+        return DB::table('products')
+        ->select('product_id', 'category_id', 'name', 'description', 'image_url', 'price')
+        ->where('name', 'like', '%' . $name . '%')
+        ->get();
     }
 
     public function deleteProduct($id){
