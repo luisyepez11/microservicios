@@ -2,10 +2,14 @@
 import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
+import Card from '@/components/card.vue';
 import axios from 'axios';
 const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
-const datos = ref()
+
+const cerrarSesion = () => {
+    localStorage.removeItem('authToken');
+}
 const tokenGuardado = localStorage.getItem('authToken');
 const cargar = async () =>{
 try {
@@ -14,13 +18,12 @@ try {
         'Authorization': `Bearer ${tokenGuardado}`
     }
 })
-    datos.value= response.data
+    console.log(response.data)
 } catch (error) {
     console.log(error)
 }
 }
 cargar()
-
 </script>
 
 <template>
@@ -34,23 +37,18 @@ cargar()
       <NavBar></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 mb-6">
-          <div class="bg-slate-800/80 border border-slate-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
-            <div>
-              <p class="text-sm text-slate-400">
-                Bienvenido de nuevo 👋
-              </p>
-              <p class="text-xl font-semibold text-slate-100">
-                Hola, <span class="text-emerald-400">{{ datos.correo_usuario.split('@')[0] }}</span>
-              </p>
-              <p class="text-xs text-slate-500 mt-1">
-                Hoy es {{ fechaActual }}
-              </p>
-            </div>
-            <div class="hidden sm:block text-3xl">
-              🛒
-            </div>
-          </div>
+              <div class="flex justify-end px-4 mb-4">
+              <router-link to="/add-product">
+          <button
+            class="px-4 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition shadow-sm hover:shadow-md"
+          >
+            + Agregar Producto
+          </button>
+          </router-link>
+        </div>
+
+        <div class="grid px-4 py-6 sm:px-0 grid-cols-4 gap-6">
+          <Card textoBoton="modificar"></Card>
         </div>
       </main>
     </div>

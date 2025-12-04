@@ -44,6 +44,21 @@
         >
           Usuarios
         </a>
+         <a
+          class="no-underline block py-3 px-6 text-center font-medium text-slate-100 hover:text-emerald-400"
+          href="http://localhost:5173/user"
+        >
+        </a>
+      </li>
+        <li
+        class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
+      >
+        <a
+          class="no-underline block py-3 px-6 text-center font-medium text-slate-100 hover:text-emerald-400"
+          href="http://localhost:5173/gestion_producto"
+        >
+          Gestion Producto
+        </a>
       </li>
     </ul>
   </nav>

@@ -1,0 +1,18 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.7"
+tokio = { version = "1", features = ["full"] }
+watch = "0.2.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1" 
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "uuid","tls-native-tls"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+hyper = "0.14"
+[dev-dependencies]
+anyhow = "1"
+httpc-test = "0.1.1"

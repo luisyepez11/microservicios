@@ -7,11 +7,9 @@ import axios from 'axios'
 const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
 
-// Referencias para el input de archivo y la vista previa
 const fileInput = ref(null)
 const imagePreview = ref(null)
 
-// Datos del producto
 const producto = ref({
   nombre: '',
   precio: 0,
@@ -20,36 +18,29 @@ const producto = ref({
   imagen: null
 })
 
-// Función para abrir el selector de archivos
 const triggerFileInput = () => {
   fileInput.value.click()
 }
 
-// Función para manejar la subida de imagen
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
-    // Validar que sea una imagen
     if (!file.type.match('image.*')) {
       alert('Por favor, selecciona un archivo de imagen válido.')
       return
     }
     
-    // Crear una URL local para la vista previa
     const reader = new FileReader()
     reader.onload = (e) => {
       imagePreview.value = e.target.result
     }
     reader.readAsDataURL(file)
     
-    // Guardar el archivo para enviarlo al servidor
     producto.value.imagen = file
   }
 }
 
-// Función para guardar el producto
 const guardarProducto = async () => {
-  // Validar campos obligatorios
   if (!producto.value.nombre || !producto.value.precio || !producto.value.cantidad) {
     alert('Por favor, completa los campos obligatorios: Nombre, Precio y Cantidad.')
     return
@@ -58,7 +49,6 @@ const guardarProducto = async () => {
   try {
     const tokenGuardado = localStorage.getItem('authToken')
     
-    // Crear FormData para enviar la imagen
     const formData = new FormData()
     formData.append('nombre', producto.value.nombre)
     formData.append('precio', producto.value.precio)
@@ -69,7 +59,6 @@ const guardarProducto = async () => {
       formData.append('imagen', producto.value.imagen)
     }
     
-    // Enviar datos al servidor
     const response = await axios.post("http://127.0.0.1:8001/productos", formData, {
       headers: {
         'Authorization': `Bearer ${tokenGuardado}`,
@@ -80,7 +69,6 @@ const guardarProducto = async () => {
     console.log('Producto guardado:', response.data)
     alert('Producto guardado exitosamente!')
     
-    // Limpiar formulario después de guardar
     resetForm()
     
   } catch (error) {
@@ -89,7 +77,6 @@ const guardarProducto = async () => {
   }
 }
 
-// Función para resetear el formulario
 const resetForm = () => {
   producto.value = {
     nombre: '',

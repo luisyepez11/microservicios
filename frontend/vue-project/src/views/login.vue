@@ -42,14 +42,12 @@ const validarFormulario = () => {
   return !errorEmail.value && !errorContrasena.value
 }
 
-const onSubmit = async () => { //REPASAR LINEA
+const onSubmit = async () => {
   errorGeneral.value = ''
 
-  //Validacion
   const valido = validarFormulario()
   if (!valido) return
 
-  //Si pasa la validación, llamamos al microservicio de autenticación!!!
   try {
     let res = await axios.post('http://127.0.0.1:8001/login', {
             correo_usuario: email.value,
@@ -61,14 +59,14 @@ const onSubmit = async () => { //REPASAR LINEA
         router.push({
             name: 'home'
         });
-// REPASAR TAMBIEN!!!
+
     if (!res.ok) {
       errorGeneral.value = 'Credenciales inválidas o error en el servidor.'
       return
     }
 
 
-    router.push('/products') // cambiar esta ruta
+    router.push('/products')
   } catch (err) {
     errorGeneral.value = err
   }
