@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // If thw table does not exist, create it
-        if (!Schema::hasTable('Products')) {
-            Schema::create('Products', function (Blueprint $table) {
-                $table->id('id');
-                $table->foreignId('category_id');
+        // If the table does not exist, create it
+        if (!Schema::hasTable('products')) {
+            Schema::create('products', function (Blueprint $table) {
+                $table->integer('product_id')->primary();
+                $table->integer('category_id');
                 $table->string('name', 50);
                 $table->string('description', 255);
                 $table->string('image_url', 255);

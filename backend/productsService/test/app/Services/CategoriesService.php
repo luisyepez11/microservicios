@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\DB;
 
 class CategoriesService{
     public function createCategory($name){
-        if (DB::table('Categories')->where('name', $name)->exists()) {
-            return "Category already exists";
+        if (DB::table('categories')->where('name', $name)->exists()) {
+            return "category already exists";
         }
 
         $category_id = random_int(1, 9999);
         while (true){
-            if (!DB::table('Categories')->where('category_id', $category_id)->exists()) {
+            if (!DB::table('categories')->where('category_id', $category_id)->exists()) {
                 break;
             }
             $category_id = random_int(1, 9999);
@@ -28,21 +28,23 @@ class CategoriesService{
     }
 
     private function loadCategoryToDB(array $category){
-        return DB::table('Categories')->insertGetId($category);
+        return DB::table('categories')->insert($category);
     }
 
     public function getCategories(){
-        return DB::table('Categories');
+        return DB::table('categories')
+        ->select('category_id', 'name')
+        ->get();
     }
 
     public function editCategory($id, $name){
-        return DB::table('Categories')->where('category_id', $id)->update([
+        return DB::table('categories')->where('category_id', $id)->update([
             'name' => $name,
         ]);
     }
 
     public function deleteCategory($id){
-        return DB::table('Categories')->where('category_id', $id)->delete();
+        return DB::table('categories')->where('category_id', $id)->delete();
     }
 }
 ?>

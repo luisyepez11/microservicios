@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Services\CategoriesService;
 
-Route::get('/Categories', function () {
+Route::get('/categories', function () {
     $categoriesService = new CategoriesService();
     return $categoriesService->getCategories();
 });
