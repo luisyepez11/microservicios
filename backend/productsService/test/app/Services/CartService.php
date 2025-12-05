@@ -5,10 +5,11 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 
 class CartService{
-    public function addToCart($product_id, $quantity){
+    public function addToCart($product_id, $quantity,$user_id){
         DB::table('cart')->insert([
             'product_id' => $product_id,
             'quantity' => $quantity,
+            'user_id' => $user_id,
         ]);
         return "Product added to cart";
     }

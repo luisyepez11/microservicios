@@ -6,8 +6,8 @@ Route::post('/addToCart', function () {
     $cartService = new CartService();
     $product_id = request('product_id');
     $quantity = request('quantity');
-
-    return $cartService->addToCart($product_id, $quantity);
+    $user_id = request('user_id');
+    return $cartService->addToCart($product_id, $quantity, $user_id);
 });
 
 Route::get('/cartItems', function () {
@@ -26,4 +26,3 @@ Route::delete('/removeFromCart/{product_id}', function ($product_id) {
     $cartService = new CartService();
     return $cartService->removeFromCart($product_id);
 })->whereNumber('product_id');
-?>

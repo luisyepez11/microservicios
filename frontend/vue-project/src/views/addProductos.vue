@@ -1,67 +1,3 @@
-¡Hola\! Analizando los nuevos logs, veo dos errores principales:
-
-1.  **`GET http://127.0.0.1:8001/mi-perfil 401 (Unauthorized)`**: Este es un problema de **autenticación** en la función `cargar()`.
-2.  **`POST http://localhost:8000/api/newProduct 500 (Internal Server Error)`**: Este es el problema original del **envío del producto**, pero ahora sabemos exactamente por qué: **estás enviando la imagen como un *string* Base64**, no como un archivo `multipart/form-data`.
-
------
-
-## 🛑 1. Error 500 (Internal Server Error) - Problema Principal
-
-En el log de la consola aparece esto:
-`{name: 'erwr', category_id: 1489, price: 10, description: 'gfthfg', image_url: 'data:image/png;base64,iVBORw0KGgoAAAAAU…`
-
-Esto confirma que tu código actual está enviando la imagen como un **string Base64** a través de un cuerpo **JSON** normal, lo cual es incorrecto porque:
-
-1.  Es menos eficiente.
-2.  Tu API de Laravel (`request('image_url')`) está diseñada para manejar archivos subidos a través de **`multipart/form-data`**, no un string Base64 dentro de un JSON.
-
-**Debes implementar las modificaciones completas que te di en la respuesta anterior** (usando `FormData`) para solucionar este error. El código que me pediste que revisara la última vez parece ser tu versión *antigua*, no la versión corregida.
-
-### Pasos para Corregir el Error 500 (Reiteración de la solución con FormData)
-
-Tienes que modificar la función **`handleImageUpload`** para que almacene el objeto `File` en `producto.value.imagen`, y modificar **`guardarProducto`** para que use `FormData`.
-
------
-
-## ⚠️ 2. Error 401 (Unauthorized) - Problema Adicional
-
-Este error aparece en la función `cargar()`:
-`GET http://127.0.0.1:8001/mi-perfil 401 (Unauthorized)`
-
-Esto significa que el token de autenticación que estás enviando en el encabezado `Authorization` no es válido o ha expirado para el *backend* que corre en el puerto `8001`.
-
-```javascript
-// CÓDIGO ACTUAL
-const tokenGuardado = localStorage.getItem('authToken');
-const cargar = async () => {
-    try {
-        const response = await axios.get("http://127.0.0.1:8001/mi-perfil", {
-            headers: {
-                // Aquí se usa el token
-                'Authorization': `Bearer ${tokenGuardado}` 
-            }
-        })
-        // ...
-    } catch (error) {
-        console.log(error) // Aquí se registra el error 401
-    }
-}
-cargar()
-```
-
-### Solución para el Error 401:
-
-1.  **Verifica `localStorage`**: Asegúrate de que, al momento de cargar el componente, **`localStorage.getItem('authToken')`** realmente contenga un token válido y activo.
-2.  **Verifica el Servidor 8001**: Confirma que el servidor en `http://127.0.0.1:8001` esté configurado correctamente para recibir y validar ese token JWT (o similar).
-3.  **Si es por prueba**: Si esta función solo es para probar la carga de datos del perfil, puedes comentarla temporalmente para enfocarte en la función `guardarProducto`.
-
------
-
-## 📝 Código Completo con Ambas Correcciones
-
-Aquí tienes el código completo del *frontend* con la **solución `FormData`** implementada para la subida de productos y la función `cargar()` tal cual la tienes (recordando que el error 401 debe resolverse en tu proceso de inicio de sesión o token).
-
-```vue
 <script setup>
 import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
@@ -79,7 +15,7 @@ const producto = ref({
  precio: 0,
  cantidad: 0,
  descripcion: '',
- // Almacena el objeto File (el archivo binario)
+
  imagen: null 
 })
 
@@ -87,7 +23,6 @@ const triggerFileInput = () => {
  fileInput.value.click()
 }
 
-// *** CÓDIGO CORREGIDO para guardar el objeto File ***
 const handleImageUpload = (event) => {
  const file = event.target.files[0]
  if (file) {
@@ -123,29 +58,33 @@ const guardarProducto = async () => {
  formData.append('category_id', 1489)
  formData.append('price', producto.value.precio)
  formData.append('description', producto.value.descripcion)
- formData.append('cantidad', producto.value.cantidad) // Si el backend lo necesita
+ formData.append('cantidad', producto.value.cantidad) 
  
  // 3. Añadir el ARCHIVO BINARIO
  if (producto.value.imagen) {
-  // 'image_url' debe ser el nombre del campo en tu API de Laravel
+
   formData.append('image_url', producto.value.imagen)
  }
  
  try {
   const tokenGuardado = localStorage.getItem('authToken')
   
-  // 4. Enviar FormData con la configuración de headers
-  const response = await axios.post(
+
+   const response = await axios.post(
    "http://localhost:8000/api/newProduct",
-   formData, // <--- Enviamos el FormData
+   formData, 
    {
     headers: {
      'Authorization': `Bearer ${tokenGuardado}`,
-     // 'Content-Type': 'multipart/form-data' es implícito con FormData
     }
    }
   )
-  
+  console.log('Producto guardado:', response.data)
+  const stock = await axios.post(
+    'http://localhost:8003/api',{
+      id_producto:response.data,
+    cantidad:producto.value.cantidad
+    })
   console.log('Producto guardado:', response.data)
   alert('Producto guardado exitosamente!')
   
