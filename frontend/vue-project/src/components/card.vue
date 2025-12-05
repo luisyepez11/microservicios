@@ -4,6 +4,13 @@ defineProps({
   textoBoton: {
     type: String,
     default: 'Comprar' // Valor por defecto
+  },
+  nombre:{
+    type:String,
+    default:"producto"
+  },
+  precio:{
+    default:0.0
   }
 })
 </script>
@@ -23,11 +30,11 @@ defineProps({
 
     <div class="p-4">
       <h2 class="text-3xl font-normal text-slate-100 mb-1">
-        Producto
+        {{ nombre }}
       </h2>
 
       <p class="text-2xl font-normal text-slate-300 mb-4">
-        $10.99
+        ${{ precio }}
       </p>
 
       <button

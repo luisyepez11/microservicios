@@ -6,7 +6,7 @@ import Card from '@/components/card.vue';
 import axios from 'axios';
 const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
-
+const listaProductos = ref({})
 const cerrarSesion = () => {
     localStorage.removeItem('authToken');
 }
@@ -18,6 +18,8 @@ try {
         'Authorization': `Bearer ${tokenGuardado}`
     }
 })
+  const productos = await axios.get("http://localhost:8000/api/products")
+    listaProductos.value = productos.data;
     console.log(response.data)
 } catch (error) {
     console.log(error)
@@ -47,8 +49,9 @@ cargar()
           </router-link>
         </div>
 
-        <div class="grid px-4 py-6 sm:px-0 grid-cols-4 gap-6">
-          <Card textoBoton="modificar"></Card>
+        <div class="grid px-4 py-6 sm:px-0 grid-cols-5 gap-6">
+          <Card v-for="value in listaProductos"
+          :nombre="value.name" :precio="value.price"></Card>
         </div>
       </main>
     </div>
