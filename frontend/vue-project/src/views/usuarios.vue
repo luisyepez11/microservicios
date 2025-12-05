@@ -3,7 +3,18 @@ import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import axios from 'axios';
-const usuarios = ref({})
+const usuarios = ref([
+  {
+    id_usuario: 1,
+    correo_usuario: 'juan@example.com',
+    fecha_creacion: '2025-12-01T10:00:00'
+  },
+  {
+    id_usuario: 2,
+    correo_usuario: 'maria@example.com',
+    fecha_creacion: '2025-12-02T15:30:00'
+  }
+])
 const fechaActual = ref(new Date().toLocaleDateString())
 
 const cerrarSesion = () => {
@@ -44,17 +55,17 @@ cargar()
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
               >
-                Encabezado 1
+                Correo
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
               >
-                Encabezado 2
+                Fecha de creación
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
               >
-                Encabezado 3
+                Acción
               </th>
             </tr>
           </thead>
@@ -62,6 +73,7 @@ cargar()
             <tr
               class="bg-slate-900/70 hover:bg-slate-800 transition duration-150"
               v-for="usuario in usuarios"
+              :key="usuario.id_usuario"
             >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
                 {{ usuario.correo_usuario }}
@@ -70,11 +82,15 @@ cargar()
                 {{ (usuario.fecha_creacion.split('T'))[0] }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
-                <button
-                  class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg hover:bg-emerald-400 active:scale-[0.98] transition duration-150 font-semibold shadow-sm hover:shadow-md"
+                <router-link
+                  :to="{ name: 'user-detail', params: { id: usuario.id_usuario } }"
                 >
-                  ver
-                </button>
+                  <button
+                    class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg hover:bg-emerald-400 active:scale-[0.98] transition duration-150 font-semibold shadow-sm hover:shadow-md"
+                  >
+                    Ver
+                  </button>
+                </router-link>
               </td>
             </tr>
           </tbody>

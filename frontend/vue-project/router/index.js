@@ -10,6 +10,7 @@ import Stock from "@/views/stock.vue";
 import addproductos from "@/views/addProductos.vue";
 import Codigo from '../src/views/codigo.vue';
 import gestion_producto from "@/views/gestion_producto.vue";
+import UserDetail from "@/views/userDetail.vue";
 
 const routes = [
     {
@@ -31,6 +32,11 @@ const routes = [
         path: '/user',
         name: 'user',
         component: Usuarios
+    },
+    {
+        path: '/user/:id',
+        name: 'user-detail',
+        component: UserDetail
     },
     {
         path: '/product',
