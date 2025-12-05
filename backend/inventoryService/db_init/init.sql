@@ -5,7 +5,7 @@
 -- Dumped from database version 17.5
 -- Dumped by pg_dump version 17.5
 
--- Started on 2025-11-27 15:55:23
+-- Started on 2025-12-05 02:50:59
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -40,13 +40,13 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 218 (class 1259 OID 82286)
+-- TOC entry 218 (class 1259 OID 90470)
 -- Name: stock; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.stock (
     id_stock uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    id_producto uuid,
+    id_producto bigint,
     cantidad integer
 );
 
@@ -54,18 +54,17 @@ CREATE TABLE public.stock (
 ALTER TABLE public.stock OWNER TO postgres;
 
 --
--- TOC entry 4853 (class 0 OID 82286)
+-- TOC entry 4853 (class 0 OID 90470)
 -- Dependencies: 218
 -- Data for Name: stock; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.stock (id_stock, id_producto, cantidad) FROM stdin;
-1f3b36f2-3bc7-4377-a043-b60d1255e724	30e6fb6c-f9aa-4fe8-b087-771a9b0016b0	500
 \.
 
 
 --
--- TOC entry 4707 (class 2606 OID 82291)
+-- TOC entry 4707 (class 2606 OID 90475)
 -- Name: stock stock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -73,7 +72,7 @@ ALTER TABLE ONLY public.stock
     ADD CONSTRAINT stock_pkey PRIMARY KEY (id_stock);
 
 
--- Completed on 2025-11-27 15:55:23
+-- Completed on 2025-12-05 02:50:59
 
 --
 -- PostgreSQL database dump complete

@@ -31,6 +31,6 @@ WORKDIR /app
 COPY --from=builder /app/target/release/api ./api
 
 
-EXPOSE 8000
+EXPOSE 8003
 
 CMD ["./api"]

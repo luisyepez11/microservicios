@@ -16,7 +16,7 @@ async fn main() {
     let database_url = "postgres://postgres:prueba123@db:5432/stock_api";
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .acquire_timeout(Duration::from_secs(3))
+        .acquire_timeout(Duration::from_secs(10))
         .connect(database_url)
         .await
         .expect("Error conectando a la base de datos");
@@ -35,7 +35,7 @@ async fn main() {
         .layer(cors);  
 
 
-    let addr = SocketAddr::from(([0,0,0,0], 8000));
+    let addr = SocketAddr::from(([0,0,0,0], 8003));
     println!("->> LISTENING on http://{addr}\n");
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, routes_all)
@@ -48,7 +48,7 @@ async fn main() {
 #[derive(Debug, Deserialize, Serialize, FromRow)] 
 pub struct Stock {
     pub id_stock: Option<Uuid>, 
-    pub id_producto: Uuid,
+    pub id_producto: i64,
     pub cantidad: i32,
 }
 
@@ -82,21 +82,12 @@ async fn get_stocks(State(pool): State<PgPool>) -> impl IntoResponse {
     }
 }
 
-async fn get_stock(State(pool): State<PgPool>, Path(id_producto): Path<String>) -> impl IntoResponse {
-    let id_producto_uuid = match Uuid::parse_str(&id_producto) {
-        Ok(uuid) => uuid,
-        Err(_) => {
-            return (
-                axum::http::StatusCode::BAD_REQUEST,
-                "ID de producto inválido"
-            ).into_response();
-        }
-    };
+async fn get_stock(State(pool): State<PgPool>, Path(id_producto): Path<i64>) -> impl IntoResponse {
 
     match sqlx::query_as::<_, Stock>(
         "SELECT * FROM stock WHERE id_producto = $1"
     )
-    .bind(id_producto_uuid)
+    .bind(id_producto)
     .fetch_one(&pool)  
     .await {
         Ok(stocks) => Json(stocks).into_response(),
@@ -114,7 +105,7 @@ async fn get_stock(State(pool): State<PgPool>, Path(id_producto): Path<String>) 
 async fn post_stock(State(pool): State<PgPool> ,Json(body): Json<Stock>) -> impl IntoResponse {
     println!("->>{:<12} - post_stock","HANDLER");
     
-    let id_producto: Uuid = body.id_producto;
+    let id_producto: i64 = body.id_producto;
     let cantidad: i32 = body.cantidad;
     
     match sqlx::query(

@@ -9,7 +9,7 @@ services:
     # Reinicia automáticamente si falla
     restart: always
     ports:
-      - "8000:8000"
+      - "8003:8003"
     depends_on:
       db:
         condition: service_healthy
@@ -23,11 +23,11 @@ services:
     environment:
  
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: v11g06tr
+      POSTGRES_PASSWORD: prueba123
       POSTGRES_DB: stock_api
     ports:
 
-      - "5432:5432"
+      - "5632:5432"
     volumes:
       # Persistencia de datos
       - postgres_data:/var/lib/postgresql/data

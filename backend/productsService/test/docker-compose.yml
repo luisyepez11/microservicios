@@ -1,44 +1,52 @@
+version: '3.8'
+
 services:
+  # --- SERVICIO: TU APLICACIÓN LARAVEL ---
   app:
+    # Usa el Dockerfile que acabas de subir
     build:
       context: .
       dockerfile: docker.dockerfile
+    image: laravel-postgres-app
     container_name: laravel_app
-    volumes:
-      - .:/var/www/http
+    restart: unless-stopped
     ports:
-      - "8002:8002"
-    depends_on:
-      db:
-        condition: service_healthy
+      - "8000:8002" 
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8002"]
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8002
       DB_CONNECTION: pgsql
       DB_HOST: db
-      DB_PORT: 5633
+      DB_PORT: 5432 
       DB_DATABASE: microservices-db
-      DB_USERNAME: postgres
-      DB_PASSWORD: 0000
+      DB_USERNAME: appuser    
+      DB_PASSWORD: appsecret  
+    volumes:
+      - .:/var/www/http 
+    depends_on:
+      - db
+    networks:
+      - app-network
 
+  # --- SERVICIO: BASE DE DATOS POSTGRESQL ---
   db:
-    image: postgres:16
+    image: postgres:15-alpine
     container_name: laravel_db
-    command: ["postgres", "-c", "port=5433"]
+    restart: unless-stopped
     environment:
       POSTGRES_DB: microservices-db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 0000
+      POSTGRES_USER: appuser      
+      POSTGRES_PASSWORD: appsecret  
+      POSTGRES_ROOT_PASSWORD: root
     ports:
-      - "5633:5633"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -p 5433"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "5433:5432" 
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   pgdata:
+
+networks:
+  app-network:
+    driver: bridge
