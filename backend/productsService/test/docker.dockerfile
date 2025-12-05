@@ -2,7 +2,7 @@ FROM php:8.2-cli
 
 # Install system dependencies and PHP extensions commonly needed by Laravel
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
+	 && apt-get install -y --no-install-recommends \
 	   git \
 	   unzip \
 	   libonig-dev \
@@ -10,9 +10,12 @@ RUN apt-get update \
 	   libpng-dev \
 	   libicu-dev \
 	   libxml2-dev \
+		 libpq-dev \
 	&& docker-php-ext-configure intl \
 	&& docker-php-ext-install \
-	   pdo_mysql \
+		 pdo_mysql \
+		 pdo_pgsql \
+		 pgsql \
 	   mbstring \
 	   zip \
 	   intl \
@@ -48,4 +51,4 @@ RUN if [ -f artisan ]; then \
 EXPOSE 8000
 
 # Default command: run Laravel's built-in server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8002"]

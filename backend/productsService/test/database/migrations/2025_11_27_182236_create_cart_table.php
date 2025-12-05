@@ -13,10 +13,11 @@ return new class extends Migration
     {
         if (!Schema::hasTable('cart')){
             Schema::create('cart', function (Blueprint $table) {
-                $table->id('id');
-                $table->foreignId('product_id');
-                $table->foreignId('user_id');
-                $table->timestamps();
+                $table->id();
+                $table->integer('product_id');
+                $table->integer('quantity');
+                $table->uuid('user_id');
+                $table->integer('quantity');
             });
         }
     }

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Servicio de la aplicación Rust (Axum)
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    # Reinicia automáticamente si falla
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Servicio de la base de datos PostgreSQL
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+ 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: v11g06tr
+      POSTGRES_DB: stock_api
+    ports:
+
+      - "5432:5432"
+    volumes:
+      # Persistencia de datos
+      - postgres_data:/var/lib/postgresql/data
+      # Ejecuta el script de inicialización de la BD
+      - ./db_init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck: # Check de salud para el `depends_on`
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stock_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+# Definición de volúmenes para persistencia
+volumes:
+  postgres_data:
+
+# Definición de red para que los servicios puedan comunicarse
+networks:
+  app-network:
+    driver: bridge
