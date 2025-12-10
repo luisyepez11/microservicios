@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, String, ForeignKey, DateTime
+from sqlalchemy import create_engine, Column, String, ForeignKey, DateTime, desc, asc
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 import uuid
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field, field_validator, EmailStr
-from typing import List
+from typing import List, Optional
 import os
 from dotenv import load_dotenv
 from jose import JWTError, jwt
@@ -38,6 +38,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 JWT_SECRET = os.getenv("JWT_SECRET")
 SAL_ENCRYPT = os.getenv("SAL_ENCRYPT")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@admin.com")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin123!")
 
 # obtener configuracion de Resend
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
@@ -96,6 +98,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         "id_usuario": payload.get("id_usuario"),
         "correo_usuario": payload.get("correo_usuario"),
         "fecha_creacion": payload.get("fecha_creacion"),
+        "ultima_conexion": payload.get("ultima_conexion"),
         "permisos": payload.get("permisos", [])
     }
     
@@ -112,6 +115,7 @@ class Usuario(Base):
     correo_usuario = Column(String, unique=True, nullable=False)
     contraseña_usuario = Column(String, nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    ultima_conexion = Column(DateTime, nullable=True)  
 
 class Permiso(Base):
     __tablename__ = "permisos"
@@ -125,6 +129,15 @@ class PermisoUsuario(Base):
     id_permiso_usuario = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"))
     id_permiso = Column(UUID(as_uuid=True), ForeignKey("permisos.id_permiso"))
+
+class HistorialUsuario(Base):
+    __tablename__ = "historial_usuario"
+    
+    id_historial_usuario = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=False)
+    descripcion_operacion = Column(String, nullable=False) 
+    fecha_operacion = Column(DateTime, default=datetime.utcnow, nullable=False)
+
 
 def crear_permisos_por_defecto(db: Session):
     """Crea los permisos por defecto con UUIDs fijos y válidos"""
@@ -172,11 +185,62 @@ def crear_permisos_por_defecto(db: Session):
     except Exception as e:
         db.rollback()
         raise
+    
+def crear_usuario_admin_por_defecto(db: Session):
+    """Crea un usuario administrador con todos los permisos si no existe"""
+    try:
+        usuario_admin = db.query(Usuario).filter(
+            Usuario.correo_usuario == ADMIN_EMAIL
+        ).first()
+        
+        if usuario_admin:
+            print(f"Usuario administrador ya existe: {ADMIN_EMAIL}")
+            return
+        
+        print(f"Creando usuario administrador por defecto: {ADMIN_EMAIL}")
+        
+        # Crear el usuario administrador
+        usuario_admin = Usuario(
+            correo_usuario=ADMIN_EMAIL,
+            contraseña_usuario=get_password_hash(ADMIN_PASSWORD),
+            fecha_creacion=datetime.utcnow()
+        )
+        
+        db.add(usuario_admin)
+        db.commit()
+        db.refresh(usuario_admin)
+        
+        # Obtener todos los permisos existentes
+        permisos = db.query(Permiso).all()
+        
+        # Asignar todos los permisos al administrador
+        for permiso in permisos:
+            permiso_usuario = PermisoUsuario(
+                id_usuario=usuario_admin.id_usuario,
+                id_permiso=permiso.id_permiso
+            )
+            db.add(permiso_usuario)
+            print(f"   + Permiso asignado: {permiso.nombre_permiso}")
+        
+        db.commit()
+        
+        print(f"Usuario administrador creado exitosamente")
+        print(f"Email: {ADMIN_EMAIL}")
+        print(f"Contraseña: {ADMIN_PASSWORD}")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Error al crear usuario administrador: {str(e)}")
+        raise
 
 Base.metadata.create_all(bind=engine)
 
 with SessionLocal() as db:
-    crear_permisos_por_defecto(db)
+    try:
+        crear_permisos_por_defecto(db)
+        crear_usuario_admin_por_defecto(db) 
+    except Exception as e:
+        print(f"Error durante la inicialización: {str(e)}")
 
 #esquemas
 
@@ -204,6 +268,7 @@ class UsuarioResponse(BaseModel):
     id_usuario: uuid.UUID
     correo_usuario: str
     fecha_creacion: datetime
+    ultima_conexion: Optional[datetime] = None
     
     model_config = {
         "from_attributes": True
@@ -253,6 +318,7 @@ class PerfilResponse(BaseModel):
     id_usuario: uuid.UUID
     correo_usuario: str
     fecha_creacion: datetime
+    ultima_conexion: Optional[datetime] = None 
     permisos: List[PermisoEnPerfil] = []
     
     model_config = {
@@ -273,7 +339,22 @@ class EmailVerificacionResponse(BaseModel):
     correo_enviado: bool
     correo_destino: str
 
+class HistorialUsuarioCreate(BaseModel):
+    id_usuario: uuid.UUID
+    descripcion_operacion: str = Field(..., min_length=2, max_length=500)
 
+class HistorialUsuarioUpdate(BaseModel):
+    descripcion_operacion: str = Field(..., min_length=2, max_length=500)
+
+class HistorialUsuarioResponse(BaseModel):
+    id_historial_usuario: uuid.UUID
+    id_usuario: uuid.UUID
+    descripcion_operacion: str
+    fecha_operacion: datetime
+    
+    model_config = {
+        "from_attributes": True
+    }
 
 
 def obtener_permisos_usuario(db: Session, usuario_id: uuid.UUID) -> List[PermisoEnPerfil]:
@@ -306,12 +387,66 @@ def preparar_datos_usuario_para_token(usuario: Usuario, permisos: List[PermisoEn
             "nombre_permiso": permiso.nombre_permiso
         })
     
-    return {
+    datos_usuario = {
         "id_usuario": str(usuario.id_usuario),
         "correo_usuario": usuario.correo_usuario,
         "fecha_creacion": usuario.fecha_creacion.isoformat(),
+        "ultima_conexion": usuario.ultima_conexion.isoformat() if usuario.ultima_conexion else None,
         "permisos": permisos_serializables
     }
+    
+    return datos_usuario
+
+def verificar_permiso(current_user: dict, permiso_requerido: str) -> bool:
+    """Verifica si el usuario tiene un permiso específico"""
+    return any(
+        permiso.get("nombre_permiso") == permiso_requerido 
+        for permiso in current_user["permisos"]
+    )
+
+def registrar_operacion_historial(
+    db: Session, 
+    usuario_id: uuid.UUID, 
+    descripcion: str
+) -> bool:
+    """
+    Función auxiliar para registrar una operación en el historial
+    """
+    try:
+        nueva_entrada = HistorialUsuario(
+            id_usuario=usuario_id,
+            descripcion_operacion=descripcion
+        )
+        db.add(nueva_entrada)
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"Error al registrar operación en historial: {str(e)}")
+        return False
+
+def actualizar_ultima_conexion_usuario(db: Session, usuario_id: uuid.UUID, razon: str = "Actividad en el sistema"):
+    """
+    Función auxiliar para actualizar la última conexión de un usuario
+    """
+    try:
+        usuario = db.query(Usuario).filter(Usuario.id_usuario == usuario_id).first()
+        
+        if usuario:
+            usuario.ultima_conexion = datetime.utcnow()
+            db.commit()
+            
+            registrar_operacion_historial(
+                db, 
+                usuario_id, 
+                f"Última conexión actualizada: {razon}"
+            )
+            
+            return True
+        return False
+    except Exception as e:
+        print(f"Error al actualizar última conexión: {str(e)}")
+        return False
 
 # funcion para enviar correo con el codigo por n8n
 async def enviar_codigo_verificacion_resend(destinatario: str, codigo_verificacion: str) -> bool:
@@ -328,9 +463,9 @@ async def enviar_codigo_verificacion_resend(destinatario: str, codigo_verificaci
         """
         
         data = {
-    "correo": destinatario,
-    "codigo": codigo_verificacion
-}
+            "correo": destinatario,
+            "codigo": codigo_verificacion
+        }
         
         headers = {
             "Authorization": f"Bearer {RESEND_API_KEY}",
@@ -355,16 +490,15 @@ async def enviar_codigo_verificacion_resend(destinatario: str, codigo_verificaci
         print(f"Excepción enviando email: {str(e)}")
         return False
     
-
 # crear tablas
 Base.metadata.create_all(bind=engine)
 
-#endpoints
+# ENDPOINTS
 @app.get("/", tags=["Lógica de Usuarios"])
 def root():
     return {"mensaje": "API de Gestión de Usuarios y Permisos", "estado": "activo"}
     
-# incluyendo los datos del token
+# LOGIN 
 @app.post("/login", response_model=TokenResponse, tags=["Lógica de Usuarios"])
 def login(login_data: LoginData, db: Session = Depends(get_db)):
     """
@@ -383,17 +517,30 @@ def login(login_data: LoginData, db: Session = Depends(get_db)):
         if not verify_password(login_data.contraseña_usuario, usuario.contraseña_usuario):
             raise HTTPException(status_code=401, detail="Credenciales incorrectas")
         
+        # actualizar última conexión
+        usuario.ultima_conexion = datetime.utcnow()
+        db.commit()
+        db.refresh(usuario)
+        
+        # registrar en el historial
+        registrar_operacion_historial(
+            db, 
+            usuario.id_usuario, 
+            "Inició sesión en el sistema"
+        )
+        
         # obtener permisos del usuario
         permisos = obtener_permisos_usuario(db, usuario.id_usuario)
         datos_usuario_token = preparar_datos_usuario_para_token(usuario, permisos)
         
-        # Crear token con los datos del usuario
+        # crear token con los datos del usuario
         access_token = create_access_token(datos_usuario_token)
         
         perfil_completo = PerfilResponse(
             id_usuario=usuario.id_usuario,
             correo_usuario=usuario.correo_usuario,
             fecha_creacion=usuario.fecha_creacion,
+            ultima_conexion=usuario.ultima_conexion,
             permisos=permisos
         )
         
@@ -407,6 +554,121 @@ def login(login_data: LoginData, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en el login: {str(e)}")
+    
+# ENDPOINTS DE ÚLTIMA CONEXIÓN
+@app.put("/actualizar-ultima-conexion", response_model=UsuarioResponse, tags=["Lógica de Usuarios"])
+def actualizar_ultima_conexion(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualiza la última conexión del usuario autenticado
+    """
+    try:
+        usuario = db.query(Usuario).filter(Usuario.id_usuario == current_user["id_usuario"]).first()
+        
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario.ultima_conexion = datetime.utcnow()
+        db.commit()
+        db.refresh(usuario)
+        
+        registrar_operacion_historial(
+            db, 
+            usuario.id_usuario, 
+            "Actualizó su última conexión manualmente"
+        )
+        
+        return usuario
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al actualizar última conexión: {str(e)}"
+        )
+
+@app.put("/usuarios/{usuario_id}/actualizar-conexion", response_model=UsuarioResponse, tags=["Lógica de Usuarios"])
+def actualizar_conexion_usuario(
+    usuario_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Actualizar la última conexión de cualquier usuario (solo administradores)
+    """
+    try:
+        if not verificar_permiso(current_user, "manejo_usuarios"):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para actualizar conexiones de otros usuarios"
+            )
+        
+        # Buscar el usuario
+        usuario = db.query(Usuario).filter(Usuario.id_usuario == usuario_id).first()
+        
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario.ultima_conexion = datetime.utcnow()
+        db.commit()
+        db.refresh(usuario)
+        
+        registrar_operacion_historial(
+            db, 
+            usuario.id_usuario, 
+            f"Última conexión actualizada por administrador ({current_user['correo_usuario']})"
+        )
+        
+        return usuario
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al actualizar conexión del usuario: {str(e)}"
+        )
+
+# LOGOUT
+@app.post("/logout", tags=["Lógica de Usuarios"])
+def logout(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Cerrar sesión y actualizar última conexión
+    """
+    try:
+        # Actualizar última conexión
+        usuario = db.query(Usuario).filter(
+            Usuario.id_usuario == current_user["id_usuario"]
+        ).first()
+        
+        if usuario:
+            usuario.ultima_conexion = datetime.utcnow()
+            db.commit()
+            
+            registrar_operacion_historial(
+                db, 
+                usuario.id_usuario, 
+                "Cerró sesión en el sistema"
+            )
+        
+        return {
+            "mensaje": "Sesión cerrada correctamente",
+            "ultima_conexion": usuario.ultima_conexion if usuario else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al cerrar sesión: {str(e)}"
+        )
 
 @app.get("/mi-perfil", response_model=PerfilResponse, tags=["Lógica de Usuarios"])
 def obtener_mi_perfil(current_user: dict = Depends(get_current_user)):
@@ -425,6 +687,8 @@ def obtener_mi_perfil(current_user: dict = Depends(get_current_user)):
             id_usuario=uuid.UUID(current_user["id_usuario"]),
             correo_usuario=current_user["correo_usuario"],
             fecha_creacion=datetime.fromisoformat(current_user["fecha_creacion"]),
+            ultima_conexion=datetime.fromisoformat(current_user.get("ultima_conexion")) 
+                if current_user.get("ultima_conexion") else None,
             permisos=permisos_obj
         )
         
@@ -436,14 +700,11 @@ def obtener_mi_perfil(current_user: dict = Depends(get_current_user)):
             detail=f"Error al obtener el perfil: {str(e)}"
         )
 
-#CRUD
-#crear usuario
+#CRUD USUARIOS
 @app.post("/usuarios", response_model=UsuarioResponse, tags=["Usuarios"])
 def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     """
     Crear un nuevo usuario
-    - Valida automáticamente el email y contraseña con Pydantic
-    - Devuelve el ID del usuario creado (como solicitaste)
     """
     try:
         # verificar si existe ya el correo
@@ -467,18 +728,22 @@ def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_usuario)
         
+        registrar_operacion_historial(
+            db, 
+            db_usuario.id_usuario, 
+            "Usuario creado en el sistema"
+        )
+        
         return db_usuario
         
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al crear usuario: {str(e)}")
 
-# obtener usuarios
 @app.get("/usuarios", response_model=list[UsuarioResponse], tags=["Usuarios"])
 def obtener_usuarios(db: Session = Depends(get_db)):
     """
     Obtener todos los usuarios registrados
-    - No incluye las contraseñas en la respuesta
     """
     try:
         usuarios = db.query(Usuario).all()
@@ -486,7 +751,6 @@ def obtener_usuarios(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener usuarios: {str(e)}")
 
-# obtener un usuario por su id
 @app.get("/usuarios/{usuario_id}", response_model=UsuarioResponse, tags=["Usuarios"])
 def obtener_usuario(usuario_id: uuid.UUID, db: Session = Depends(get_db)):
     """
@@ -506,7 +770,6 @@ def obtener_usuario(usuario_id: uuid.UUID, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener usuario: {str(e)}")
 
-# actualizar usuario
 @app.put("/usuarios/{usuario_id}", response_model=UsuarioResponse, tags=["Usuarios"])
 def actualizar_usuario(
     usuario_id: uuid.UUID, 
@@ -542,6 +805,12 @@ def actualizar_usuario(
         db.commit()
         db.refresh(db_usuario)
         
+        registrar_operacion_historial(
+            db, 
+            db_usuario.id_usuario, 
+            "Actualizó su información de usuario"
+        )
+        
         return db_usuario
         
     except HTTPException:
@@ -550,12 +819,10 @@ def actualizar_usuario(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar usuario: {str(e)}")
     
-# eliminar usuario
 @app.delete("/usuarios/{usuario_id}", tags=["Usuarios"])
 def eliminar_usuario(usuario_id: uuid.UUID, db: Session = Depends(get_db)):
     """
     Eliminar un usuario
-    - También elimina automáticamente todas sus relaciones con permisos
     """
     try:
         # buscar el usuario
@@ -586,8 +853,7 @@ def eliminar_usuario(usuario_id: uuid.UUID, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al eliminar usuario: {str(e)}")
 
-# endpoints de permisos
-# crear permisos
+# ENDPOINTS DE PERMISOS
 @app.post("/permisos", response_model=PermisoResponse, tags=["Permisos"])
 def crear_permiso(permiso: PermisoCreate, db: Session = Depends(get_db)):
     """
@@ -615,7 +881,6 @@ def crear_permiso(permiso: PermisoCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al crear permiso: {str(e)}")
 
-# obtener todos los permisos
 @app.get("/permisos", response_model=list[PermisoResponse], tags=["Permisos"])
 def obtener_permisos(db: Session = Depends(get_db)):
     """
@@ -627,7 +892,6 @@ def obtener_permisos(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener permisos: {str(e)}")
 
-# obtener un permiso por su id
 @app.get("/permisos/{permiso_id}", response_model=PermisoResponse, tags=["Permisos"])
 def obtener_permiso(permiso_id: uuid.UUID, db: Session = Depends(get_db)):
     """
@@ -644,7 +908,6 @@ def obtener_permiso(permiso_id: uuid.UUID, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener permiso: {str(e)}")
 
-# actualizar permiso
 @app.put("/permisos/{permiso_id}", response_model=PermisoResponse, tags=["Permisos"])
 def actualizar_permiso(
     permiso_id: uuid.UUID, 
@@ -684,7 +947,6 @@ def actualizar_permiso(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar permiso: {str(e)}")
 
-# eliminar permiso
 @app.delete("/permisos/{permiso_id}", tags=["Permisos"])
 def eliminar_permiso(permiso_id: uuid.UUID, db: Session = Depends(get_db)):
     """
@@ -705,8 +967,7 @@ def eliminar_permiso(permiso_id: uuid.UUID, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al eliminar permiso: {str(e)}")
 
-# enpoints para relaciones usuarios-permisos
-# asignar permisos a un usuario
+# ENDPOINTS PARA RELACIONES USUARIOS-PERMISOS
 @app.post("/permisos-usuario", response_model=PermisoUsuarioResponse, tags=["Permisos-Usuarios"])
 def asignar_permiso_a_usuario(permiso_usuario: PermisoUsuarioCreate, db: Session = Depends(get_db)):
     """
@@ -742,6 +1003,12 @@ def asignar_permiso_a_usuario(permiso_usuario: PermisoUsuarioCreate, db: Session
         db.commit()
         db.refresh(db_permiso_usuario)
         
+        registrar_operacion_historial(
+            db, 
+            usuario.id_usuario, 
+            f"Se asignó el permiso '{permiso.nombre_permiso}' al usuario"
+        )
+        
         return db_permiso_usuario
         
     except HTTPException:
@@ -750,7 +1017,6 @@ def asignar_permiso_a_usuario(permiso_usuario: PermisoUsuarioCreate, db: Session
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al asignar permiso: {str(e)}")
 
-# desvincular permiso y usuario por sus ids
 @app.delete("/permisos-usuario/", tags=["Permisos-Usuarios"])
 def desvincular_permiso_de_usuario(
     id_usuario: uuid.UUID,
@@ -776,6 +1042,15 @@ def desvincular_permiso_de_usuario(
         db.delete(permiso_usuario)
         db.commit()
         
+        permiso = db.query(Permiso).filter(Permiso.id_permiso == id_permiso).first()
+        permiso_nombre = permiso.nombre_permiso if permiso else "permiso desconocido"
+        
+        registrar_operacion_historial(
+            db, 
+            id_usuario, 
+            f"Se desvinculó el permiso '{permiso_nombre}' del usuario"
+        )
+        
         return {
             "mensaje": "Permiso desvinculado correctamente del usuario",
             "id_usuario": id_usuario,
@@ -788,7 +1063,7 @@ def desvincular_permiso_de_usuario(
             status_code=500, 
             detail=f"Error al desvincular permiso: {str(e)}"
         )
-# obtener permisos de un usuario
+
 @app.get("/usuarios/{usuario_id}/permisos", tags=["Permisos-Usuarios"])
 def obtener_permisos_de_usuario(usuario_id: uuid.UUID, db: Session = Depends(get_db)):
     """
@@ -822,7 +1097,7 @@ def obtener_permisos_de_usuario(usuario_id: uuid.UUID, db: Session = Depends(get
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener permisos del usuario: {str(e)}")
     
-# enviar codigo al usuario
+# EMAIL VERIFICATION
 @app.post("/enviar-codigo-verificacion", response_model=EmailVerificacionResponse, tags=["Lógica de Usuarios"])
 async def enviar_codigo_verificacion(
     datos: EmailVerificacionRequest,
@@ -851,3 +1126,215 @@ async def enviar_codigo_verificacion(
             status_code=500, 
             detail=f"Error al enviar código de verificación: {str(e)}"
         )
+
+@app.get("/historial-usuarios", response_model=list[HistorialUsuarioResponse], tags=["Historial de Usuarios"])
+def obtener_todo_el_historial(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Obtener todo el historial de todos los usuarios
+    """
+    try:
+        # Verificar permisos
+        if not verificar_permiso(current_user, "manejo_usuarios"):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para ver el historial de usuarios"
+            )
+        
+        historial = db.query(HistorialUsuario).all()
+        return historial
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al obtener el historial: {str(e)}"
+        )
+
+@app.get("/usuarios/{usuario_id}/historial", response_model=list[HistorialUsuarioResponse], tags=["Historial de Usuarios"])
+def obtener_historial_usuario(
+    usuario_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Obtener el historial de un usuario específico por su ID
+    """
+    try:
+        # verificar que el usuario existe
+        usuario = db.query(Usuario).filter(Usuario.id_usuario == usuario_id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        es_mismo_usuario = str(current_user["id_usuario"]) == str(usuario_id)
+        tiene_permiso = verificar_permiso(current_user, "manejo_usuarios")
+        
+        if not (es_mismo_usuario or tiene_permiso):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para ver el historial de este usuario"
+            )
+        
+        historial = db.query(HistorialUsuario)\
+            .filter(HistorialUsuario.id_usuario == usuario_id)\
+            .order_by(HistorialUsuario.fecha_operacion.desc())\
+            .all()
+        
+        return historial
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al obtener el historial del usuario: {str(e)}"
+        )
+
+@app.post("/historial-usuarios", response_model=HistorialUsuarioResponse, tags=["Historial de Usuarios"])
+def crear_entrada_historial(
+    historial_data: HistorialUsuarioCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Crear una nueva entrada en el historial de un usuario
+    """
+    try:
+        # Verificar que el usuario existe
+        usuario = db.query(Usuario).filter(Usuario.id_usuario == historial_data.id_usuario).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Verificar permisos
+        es_mismo_usuario = str(current_user["id_usuario"]) == str(historial_data.id_usuario)
+        tiene_permiso = verificar_permiso(current_user, "manejo_usuarios")
+        
+        if not (es_mismo_usuario or tiene_permiso):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para crear entradas en el historial"
+            )
+        
+        # Crear la entrada en el historial
+        nueva_entrada = HistorialUsuario(
+            id_usuario=historial_data.id_usuario,
+            descripcion_operacion=historial_data.descripcion_operacion
+        )
+        
+        db.add(nueva_entrada)
+        db.commit()
+        db.refresh(nueva_entrada)
+        
+        return nueva_entrada
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al crear la entrada en el historial: {str(e)}"
+        )
+
+@app.put("/historial-usuarios/{historial_id}", response_model=HistorialUsuarioResponse, tags=["Historial de Usuarios"])
+def actualizar_entrada_historial(
+    historial_id: uuid.UUID,
+    historial_data: HistorialUsuarioUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Actualizar una entrada del historial por su ID
+    """
+    try:
+        entrada_historial = db.query(HistorialUsuario)\
+            .filter(HistorialUsuario.id_historial_usuario == historial_id)\
+            .first()
+        
+        if not entrada_historial:
+            raise HTTPException(status_code=404, detail="Entrada del historial no encontrada")
+        
+        if not verificar_permiso(current_user, "manejo_usuarios"):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para editar el historial"
+            )
+        
+        # Actualizar la descripción
+        entrada_historial.descripcion_operacion = historial_data.descripcion_operacion
+        
+        db.commit()
+        db.refresh(entrada_historial)
+        
+        # Registrar en el historial (como edición)
+        registrar_operacion_historial(
+            db, 
+            entrada_historial.id_usuario, 
+            f"Se editó una entrada del historial (ID: {historial_id})"
+        )
+        
+        return entrada_historial
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al actualizar la entrada del historial: {str(e)}"
+        )
+
+@app.delete("/historial-usuarios/{historial_id}", tags=["Historial de Usuarios"])
+def eliminar_entrada_historial(
+    historial_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Eliminar una entrada del historial por su ID
+    """
+    try:
+        entrada_historial = db.query(HistorialUsuario)\
+            .filter(HistorialUsuario.id_historial_usuario == historial_id)\
+            .first()
+        
+        if not entrada_historial:
+            raise HTTPException(status_code=404, detail="Entrada del historial no encontrada")
+        
+        usuario_id = entrada_historial.id_usuario
+        
+        if not verificar_permiso(current_user, "manejo_usuarios"):
+            raise HTTPException(
+                status_code=403, 
+                detail="No tiene permisos para eliminar del historial"
+            )
+        
+        # Eliminar la entrada
+        db.delete(entrada_historial)
+        db.commit()
+        
+        # Registrar en el historial
+        registrar_operacion_historial(
+            db, 
+            usuario_id, 
+            f"Se eliminó una entrada del historial (ID: {historial_id})"
+        )
+        
+        return {
+            "mensaje": "Entrada del historial eliminada correctamente",
+            "id_historial_usuario": historial_id,
+            "id_usuario": usuario_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al eliminar la entrada del historial: {str(e)}"
+        )
+    
