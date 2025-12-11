@@ -7,6 +7,7 @@ const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
 const datos = ref()
 const tokenGuardado = localStorage.getItem('authToken');
+const datosPermisos = ref([])
 const cargar = async () =>{
 try {
     const response =await axios.get("http://127.0.0.1:8001/mi-perfil", {
@@ -15,6 +16,7 @@ try {
     }
 })
     datos.value= response.data
+    datosPermisos.value = datos.value.permisos
 } catch (error) {
     console.log(error)
 }
@@ -26,7 +28,7 @@ cargar()
 <template>
   <div class="min-h-screen bg-slate-900 flex text-slate-100">
     <!-- Sidebar -->
-    <sideBar></sideBar>
+    <sideBar :permisos="datosPermisos"></sideBar>
 
     <!-- Main Content -->
     <div class="flex-1 ml-40">

@@ -71,7 +71,7 @@ const guardarProducto = async () => {
   
 
    const response = await axios.post(
-   "http://localhost:8000/api/newProduct",
+   "http://localhost:8000/api/products/new",
    formData, 
    {
     headers: {

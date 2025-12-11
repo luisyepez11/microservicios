@@ -2,6 +2,30 @@
 import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
+import axios from 'axios'
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const datos = ref()
+const tokenGuardado = localStorage.getItem('authToken');
+const cargar = async () =>{
+try {
+    const datosUsuarios =await axios.get(`http://127.0.0.1:8001/usuarios/${route.params.id}`)
+    const datosPermiso = await axios.get(`http://127.0.0.1:8001/permisos`)
+    const datosPermisosUsario = await axios.get(`http://127.0.0.1:8001/usuarios/${route.params.id}/permisos`)
+    datos.value= datosUsuarios.data
+    permisosDisponibles.value = datosPermiso.data
+    permisosAsignados.value = datosPermisosUsario.data.permisos
+    usuario.value={
+      nombre: 'Nombre del usuario',
+      correo: datos.value.correo_usuario,
+      ultimaSesion: 'Último inicio de sesión: --/--/---- --:--',
+    }
+    console.log(permisosAsignados.value)
+} catch (error) {
+    console.log(error)
+}
+}
 
 //esto es para probar jiji
 const usuario = ref({
@@ -9,18 +33,18 @@ const usuario = ref({
   correo: 'correo@ejemplo.com',
   ultimaSesion: 'Último inicio de sesión: --/--/---- --:--',
 })
-
 const permisosAsignados = ref([
-  'Vista de productos',
-  'Gestión de inventario',
-])
+  {nombre_permiso:'Vista de productos',id_permiso:""},
+  {nombre_permiso:'Gestión de inventario',id_permiso:""},
+  ]
+)
 
 const permisosDisponibles = ref([
-  'Vista de reportes',
-  'Administrar usuarios',
-  'Configuración avanzada',
+  {id_permiso:"",nombre_permiso:'Vista de reportes'},
+  {id_permiso:"",nombre_permiso:'Vista de reportes'},
+  {id_permiso:"",nombre_permiso:'Vista de reportes'},
 ])
-
+cargar()
 const permisoSeleccionado = ref('')
 
 const agregarPermiso = () => {
@@ -110,14 +134,14 @@ const guardarCambios = () => {
               >
                 <span
                   v-for="permiso in permisosAsignados"
-                  :key="permiso"
+                  :key="permiso.id_permiso"
                   class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-600 text-xs text-slate-100"
                 >
-                  {{ permiso }}
+                  {{ permiso.nombre_permiso }}
                   <button
                     type="button"
                     class="text-slate-400 hover:text-red-400 transition text-xs"
-                    @click="quitarPermiso(permiso)"
+                    @click="quitarPermiso(permiso.nombre_permiso)"
                     title="Quitar permiso"
                   >
                     ✕
@@ -144,10 +168,10 @@ const guardarCambios = () => {
                   <option value="" disabled>Selecciona un permiso...</option>
                   <option
                     v-for="permiso in permisosDisponibles"
-                    :key="permiso"
-                    :value="permiso"
+                    :key="permiso.nombre_permiso"
+                    :value="permiso.id_permiso"
                   >
-                    {{ permiso }}
+                    {{ permiso.nombre_permiso }}
                   </option>
                 </select>
 

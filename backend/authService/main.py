@@ -39,7 +39,7 @@ DB_PASS = os.getenv("DB_PASS")
 JWT_SECRET = os.getenv("JWT_SECRET")
 SAL_ENCRYPT = os.getenv("SAL_ENCRYPT")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@admin.com")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin123!")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin12345!")
 
 # obtener configuracion de Resend
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
@@ -145,7 +145,7 @@ def crear_permisos_por_defecto(db: Session):
         permisos_por_defecto = [
             {
                 "id": uuid.UUID("11111111-1111-1111-1111-111111111111"),
-                "nombre": "vista_productos"
+                "nombre": "vista_compra_productos"
             },
             {
                 "id": uuid.UUID("22222222-2222-2222-2222-222222222222"), 

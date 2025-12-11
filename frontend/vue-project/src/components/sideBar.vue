@@ -1,3 +1,27 @@
+<script setup>
+import { ref } from 'vue'
+import axios from 'axios';
+const permisos = ref([])
+const tokenGuardado = localStorage.getItem('authToken');
+const cargar = async () =>{
+  try {
+    const response =await axios.get("http://127.0.0.1:8001/mi-perfil", {
+    headers: {
+        'Authorization': `Bearer ${tokenGuardado}`
+    }
+    
+})
+permisos.value = response.data.permisos
+console.log(permisos.value)
+  } catch (error) {
+    console.log(error)
+  }
+}
+cargar()
+const tienePermiso = (nombrePermiso) => {
+  return permisos.value.some(permiso => permiso.nombre_permiso === nombrePermiso);
+};
+</script>
 <template>
   <nav
     class="bg-slate-900 text-slate-100 w-40 flex flex-col items-center py-8 fixed top-0 bottom-0 left-0 z-10 shadow-lg border-r border-slate-800"
@@ -15,7 +39,7 @@
           Principal
         </a>
       </li>
-      <li
+      <li 
         class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
       >
         <a
@@ -25,7 +49,7 @@
           Productos
         </a>
       </li>
-      <li
+      <li v-if="tienePermiso('vista_stock')"
         class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
       >
         <a
@@ -35,7 +59,7 @@
           Almacen
         </a>
       </li>
-      <li
+      <li v-if="tienePermiso('manejo_usuarios')"
         class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
       >
         <a
@@ -50,7 +74,7 @@
         >
         </a>
       </li>
-        <li
+        <li v-if="tienePermiso('modificacion_productos')"
         class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
       >
         <a
