@@ -13,21 +13,21 @@ Route::get('/categories/{id}', function ($id) {
     return $categoriesService->getCategory($id);
 })->whereNumber('id');
 
-Route::post('/newCategory', function () {
+Route::post('/categories/new', function () {
     $categoriesService = new CategoriesService();
     $name = request('name');
 
     return $categoriesService->createCategory($name);
 });
 
-Route::put('/updateCategory/{id}', function ($id) {
+Route::put('/categories/update/{id}', function ($id) {
     $categoriesService = new CategoriesService();
     $name = request('name');
 
     return $categoriesService->editCategory($id, $name);
 })->whereNumber('id');
 
-Route::delete('/deleteCategory/{id}', function ($id) {
+Route::delete('/categories/delete/{id}', function ($id) {
     $categoriesService = new CategoriesService();
     return $categoriesService->deleteCategory($id);
 })->whereNumber('id');

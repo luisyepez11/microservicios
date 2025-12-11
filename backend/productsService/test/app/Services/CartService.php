@@ -5,29 +5,79 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 
 class CartService{
-    public function addToCart($product_id, $quantity,$user_id){
-        DB::table('cart')->insert([
+    public function addToCart($product_id, $quantity, $user_id){
+        if (!DB::table('cart')->where('user_id', $user_id)->exists()){
+            DB::table('cart')->insert([
+                'cart_id' => random_int(1, 9999),
+                'user_id' => $user_id,
+                'last_check' => now()->toTimeString(),
+            ]);
+        }
+
+        DB::table('cart_products')->insert([
+            'cart_id' => DB::table('cart')->where('user_id', $user_id)->value('cart_id'),
             'product_id' => $product_id,
             'quantity' => $quantity,
-            'user_id' => $user_id,
         ]);
         return "Product added to cart";
     }
 
-    public function getCartItems(){
-        return DB::table('cart')->get();
+    public function getCartItems($user_id){
+        DB::table('cart')->where('user_id', $user_id)->update([
+            'last_check' => now()->toTimeString(),
+        ]);
+        return DB::table('cart_products')
+        ->where('cart_id', DB::table('cart')
+        ->where('user_id', $user_id)
+        ->value('cart_id'))
+        ->get();
     }
 
-    public function updateCartItem($product_id, $quantity){
-        DB::table('cart')->where('product_id', $product_id)->update([
+    public function updateCartItem($product_id, $quantity, $user_id){
+        DB::table('cart')->where('user_id', $user_id)->update([
+            'last_check' => now()->toTimeString(),
+        ]);
+        DB::table('cart_products')->where('cart_id', DB::table('cart'))
+        ->where('user_id', $user_id)
+        ->value('cart_id')
+        ->where('product_id', $product_id)
+        ->update([
             'quantity' => $quantity,
         ]);
         return "Cart item updated";
     }
 
-    public function removeFromCart($product_id){
-        DB::table('cart')->where('product_id', $product_id)->delete();
+    public function removeFromCart($product_id, $user_id){
+        DB::table('cart')->where('user_id', $user_id)->update([
+            'last_check' => now()->toTimeString(),
+        ]);
+        DB::table('cart_products')->where('cart_id', DB::table('cart')
+        ->where('user_id', $user_id)
+        ->value('cart_id'))
+        ->where('product_id', $product_id)
+        ->delete();
         return "Product removed from cart";
+    }
+
+    public function deleteCart($user_id){
+        // Validate if last check was more than 14 days ago, if so, delete cart
+        if (strtotime(DB::table('cart')
+        ->where('user_id', $user_id)
+        ->value('last_check')) < strtotime('-14 days')){
+            DB::table('cart')->where('user_id', $user_id)->delete();
+            foreach (DB::table('cart_products')->where('cart_id', DB::table('cart')
+            ->where('user_id', $user_id)
+            ->value('cart_id'))
+            ->get() as $item){
+                DB::table('cart_products')
+                ->where('cart_id', DB::table('cart'))
+                ->where('user_id', $user_id)
+                ->value('cart_id')
+                ->where('product_id', $item->product_id)
+                ->delete();
+            }
+            return "Cart cleared";
+        }
     }
 }
 ?>

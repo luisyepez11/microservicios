@@ -2,27 +2,39 @@
 use Illuminate\Support\Facades\Route;
 use App\Services\CartService;
 
-Route::post('/addToCart', function () {
+Route::post('{user_id}/cart/add', function ($user_id) {
+    $data = request()->validate([
+        'product_id' => 'required|integer',
+        'quantity' => 'required|integer',
+    ]);
     $cartService = new CartService();
-    $product_id = request('product_id');
-    $quantity = request('quantity');
-    $user_id = request('user_id');
-    return $cartService->addToCart($product_id, $quantity, $user_id);
+    return $cartService->addToCart($data['product_id'], $data['quantity'], $user_id);
 });
 
-Route::get('/cartItems', function () {
+Route::get('{user_id}/cart/items', function ($user_id) {
     $cartService = new CartService();
-    return $cartService->getCartItems();
+    return $cartService->getCartItems($user_id);
 });
 
-Route::put('/updateCartItem/{product_id}', function ($product_id) {
+Route::put('{user_id}/cart/update', function ($user_id) {
+    $data = request()->validate([
+        'product_id' => 'required|integer',
+        'quantity' => 'required|integer',
+    ]);
     $cartService = new CartService();
-    $quantity = request('quantity');
+    return $cartService->updateCartItem($data['product_id'], $data['quantity'], $user_id);
+});
 
-    return $cartService->updateCartItem($product_id, $quantity);
-})->whereNumber('product_id');
-
-Route::delete('/removeFromCart/{product_id}', function ($product_id) {
+Route::delete('{user_id}/cart/remove', function ($user_id) {
+    $data = request()->validate([
+        'product_id' => 'required|integer',
+    ]);
     $cartService = new CartService();
-    return $cartService->removeFromCart($product_id);
-})->whereNumber('product_id');
+    return $cartService->removeFromCart($data['product_id'], $user_id);
+});
+
+Route::delete('{user_id}/cart/delete', function ($user_id) {
+    $cartService = new CartService();
+    return $cartService->deleteCart($user_id);
+});
+?>

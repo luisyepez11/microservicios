@@ -18,7 +18,7 @@ Route::get('/products/category/{category_id}', function ($category_id) {
     return $productsService->getProductsByCategory($category_id);
 })->whereNumber('category_id');
 
-Route::post('/newProduct', function () {
+Route::post('/products/new', function () {
     $productsService = new ProductsService();
     $name = request('name');
     $category_id = request('category_id');
@@ -29,7 +29,7 @@ Route::post('/newProduct', function () {
     return $productsService->createProduct($name, $category_id, $price, $description, $image_url);
 });
 
-Route::put('/updateProduct/{id}', function ($id) {
+Route::put('/products/update/{id}', function ($id) {
     $productsService = new ProductsService();
     $name = request('name');
     $category_id = request('category_id');
@@ -40,7 +40,7 @@ Route::put('/updateProduct/{id}', function ($id) {
     return $productsService->updateProduct($id, $name, $category_id, $price, $description, $image_url);
 })->whereNumber('id');
 
-Route::delete('/deleteProduct/{id}', function ($id) {
+Route::delete('/products/delete/{id}', function ($id) {
     $productsService = new ProductsService();
     return $productsService->deleteProduct($id);
 })->whereNumber('id');
