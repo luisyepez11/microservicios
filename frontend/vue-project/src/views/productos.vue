@@ -25,6 +25,37 @@ try {
 }
 }
 cargar()
+const agregarAlCarrito = (producto) => {
+ 
+  const productoEnCarrito = productos.value.find(item => item.id === producto.product_id)
+  console.log(productoEnCarrito)
+  if (productoEnCarrito) {
+    // Si ya existe, verificar que no exceda el stock
+    const cantidadTotal = productoEnCarrito.cantidad + (producto.cantidad || 1)
+    
+    
+    // Actualizar cantidad
+    productoEnCarrito.cantidad = cantidadTotal
+    console.log(`Producto ${producto.nombre} actualizado en el carrito`)
+  } else {
+    // Si no existe, agregarlo al carrito
+    const productoAAgregar = {
+      ...{id:producto.product_id,
+        nombre:producto.name,
+        precio:producto.price
+      },
+      cantidad: producto.cantidad || 1
+    }
+    
+    productos.value.push(productoAAgregar)
+    console.log(`Producto ${producto.name} agregado al carrito`)
+    console.log(producto)
+  }
+  
+  return true
+}
+const productos = ref([
+])
 </script>
 
 <template>
@@ -35,12 +66,12 @@ cargar()
     <!-- Main Content -->
     <div class="flex-1 ml-40">
       <!-- Navbar -->
-      <NavBar></NavBar>
+      <NavBar :productos="productos"></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="grid px-4 py-6 sm:px-0 grid-cols-5 gap-6">
           <Card v-for="value in listaProductos"
-          :nombre="value.name" :precio="value.price"></Card>
+          :nombre="value.name" :precio="value.price" :agregar="agregarAlCarrito" :producto="value"></Card>
         </div>
       </main>
     </div>

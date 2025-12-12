@@ -6,54 +6,14 @@ import Car from './car.vue' // Ajusta la ruta según tu estructura
 // Estados para el carrito
 const showModal = ref(false)
 const productoSeleccionado = ref(null)
-const productos = ref([
-  {
-    id: 1,
-    nombre: "Producto Ejemplo 1",
-    descripcion: "Descripción del producto 1",
-    precio: 29.99,
-    cantidad: 2,
-    categoria: "Electrónicos",
-    stock: 15
+const props = defineProps({
+  productos: {
+    type: Array,
+    default: () => []
   },
-  {
-    id: 2,
-    nombre: "Producto Ejemplo 2", 
-    descripcion: "Descripción del producto 2",
-    precio: 49.99,
-    cantidad: 1,
-    categoria: "Hogar",
-    stock: 5
-  },
-  {
-    id: 3,
-    nombre: "Producto Ejemplo 3", 
-    descripcion: "Descripción del producto 2",
-    precio: 49.99,
-    cantidad: 1,
-    categoria: "Hogar",
-    stock: 5
-  },
-  {
-    id: 4,
-    nombre: "Producto Ejemplo 4", 
-    descripcion: "Descripción del producto 2",
-    precio: 49.99,
-    cantidad: 1,
-    categoria: "Hogar",
-    stock: 5
-  },
-  {
-    id: 5,
-    nombre: "Producto Ejemplo 5", 
-    descripcion: "Descripción del producto 2",
-    precio: 49.99,
-    cantidad: 1,
-    categoria: "Hogar",
-    stock: 5
-  }
-])
-let permiso = ref({})
+
+})
+
 // Métodos del carrito
 const openModal = () => {
   showModal.value = true
@@ -70,29 +30,31 @@ const handleSeleccionar = (producto) => {
 }
 
 const handleActualizarCantidad = ({ producto, nuevaCantidad }) => {
-  const productoIndex = productos.value.findIndex(p => p.id === producto.id)
+  const productoIndex = props.productos.findIndex(p => p.id === producto.id)
+  console.log(productoIndex)
   if (productoIndex !== -1) {
-    productos.value[productoIndex].cantidad = nuevaCantidad
+    props.productos[productoIndex].cantidad = nuevaCantidad
     console.log(`Cantidad actualizada: ${producto.nombre} -> ${nuevaCantidad}`)
   }
 }
 
 const handleEliminarProducto = (producto) => {
-  const productoIndex = productos.value.findIndex(p => p.id === producto.id)
+  const productoIndex = props.productos.findIndex(p => p.id === producto.id)
   if (productoIndex !== -1) {
-    productos.value.splice(productoIndex, 1)
+    props.productos.splice(productoIndex, 1)
     console.log(`Producto eliminado: ${producto.nombre}`)
   }
 }
 
 const cantidadTotalProductos = () => {
-  return productos.value.reduce((sum, producto) => sum + producto.cantidad, 0)
+  return props.productos.reduce((sum, producto) => sum + producto.cantidad, 0)
 }
 
 const cerrarSesion = () => {
   localStorage.removeItem('authToken');
   window.location.href='http://localhost:5173'
 }
+
 </script>
 
 <template>
@@ -132,7 +94,7 @@ const cerrarSesion = () => {
     <!-- Modal del Carrito -->
     <Car 
       :show="showModal" 
-      :productos="productos"
+      :productos="props.productos"
       titulo="Mi Carrito de Compras"
       @close="handleClose"
       @seleccionar="handleSeleccionar"

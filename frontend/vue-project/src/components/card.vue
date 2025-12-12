@@ -1,4 +1,6 @@
 <script setup>
+import AddProductos from '@/views/addProductos.vue';
+
 // Define las props
 defineProps({
   textoBoton: {
@@ -11,6 +13,14 @@ defineProps({
   },
   precio:{
     default:0.0
+  },
+  agregar:{
+    type:Function,
+    default:()=>{console.log("hola")}
+  },
+  producto:{
+    type:Object,
+    default:{}
   }
 })
 </script>
@@ -39,7 +49,8 @@ defineProps({
 
       <button
         class="w-full px-4 py-2 rounded-lg text-base font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition duration-150 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-60"
-      >
+       @click="agregar(producto)"
+        >
         {{ textoBoton }}
       </button>
     </div>
