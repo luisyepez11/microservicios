@@ -22,24 +22,40 @@ class CartService{
         return "Product added to cart";
     }
 
-    public function getCartItems($user_id){
-        DB::table('cart')->where('user_id', $user_id)->update([
-            'last_check' => now()->toTimeString(),
-        ]);
-        return DB::table('cart_products')
-        ->where('cart_id', DB::table('cart')
-        ->where('user_id', $user_id)
-        ->value('cart_id'))
+    public function getCartItems($user_id)
+{
+
+    DB::table('cart')->where('user_id', $user_id)->update([
+        'last_check' => now()->toTimeString(),
+    ]);
+    
+    $cart = DB::table('cart')->where('user_id', $user_id)->first();
+    
+    
+    $cart_id = isset($cart->id) ? $cart->id : $cart->cart_id;
+
+    return DB::table('cart_products')
+        ->join('products', 'cart_products.product_id', '=', 'products.product_id')
+        ->where('cart_products.cart_id', $cart_id)
+        ->select(
+            'cart_products.*', 
+            'products.name as product_name',
+            'products.description',
+            'products.image_url',
+            'products.price'
+        )
         ->get();
-    }
+}
 
     public function updateCartItem($product_id, $quantity, $user_id){
         DB::table('cart')->where('user_id', $user_id)->update([
             'last_check' => now()->toTimeString(),
         ]);
-        DB::table('cart_products')->where('cart_id', DB::table('cart'))
-        ->where('user_id', $user_id)
-        ->value('cart_id')
+
+        $cart = DB::table('cart')->where('user_id',$user_id)->first();
+        
+        DB::table('cart_products')
+        ->where('cart_id',$cart->cart_id)
         ->where('product_id', $product_id)
         ->update([
             'quantity' => $quantity,

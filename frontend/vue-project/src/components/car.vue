@@ -16,7 +16,7 @@ const props = defineProps({
     default: "Mi Carrito"
   }
 })
-
+console.log(props.productos)
 // Emits
 const emit = defineEmits(['close', 'seleccionar', 'actualizar-cantidad', 'eliminar-producto'])
 
