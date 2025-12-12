@@ -13,8 +13,14 @@ services:
       - DB_PASS=As1qu1ro1-1
       - JWT_SECRET=123
       - SAL_ENCRYPT=123
-      - RESEND_API_KEY=re_jM8owBCS_64GjW2bZvqRmsEHcHNT2oszs
-      - RESEND_FROM_EMAIL=onboarding@resend.dev
+      # Variables de turboSMTP - reemplaza con tus valores reales
+      - TURBOSMTP_EMAIL=microservicios25@gmail.com
+      - TURBOSMTP_PASSWORD=rRUshNpq
+      - TURBOSMTP_CONSUMER_KEY=5cde269b5667a04db9ad
+      - TURBOSMTP_CONSUMER_SECRET=7V1gp4uYfPN98J2ZqUcD
+      - TURBOSMTP_FROM_EMAIL=microservicios25@gmail.com
+      - TURBOSMTP_REGION=global
+      - TURBOSMTP_NO_EXPIRE=1
     depends_on:
       - db
     command: >

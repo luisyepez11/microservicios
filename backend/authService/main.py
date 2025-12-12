@@ -14,6 +14,9 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # cargar variables de entorno
 load_dotenv()
@@ -41,9 +44,14 @@ SAL_ENCRYPT = os.getenv("SAL_ENCRYPT")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@admin.com")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin12345!")
 
-# obtener configuracion de Resend
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+# obtener configuracion de turboSMTP
+TURBOSMTP_EMAIL = os.getenv("TURBOSMTP_EMAIL", "microservicios25@gmail.com")
+TURBOSMTP_PASSWORD = os.getenv("TURBOSMTP_PASSWORD")
+TURBOSMTP_CONSUMER_KEY = os.getenv("TURBOSMTP_CONSUMER_KEY")
+TURBOSMTP_CONSUMER_SECRET = os.getenv("TURBOSMTP_CONSUMER_SECRET")
+TURBOSMTP_FROM_EMAIL = os.getenv("TURBOSMTP_FROM_EMAIL", "microservicios25@gmail.com")
+TURBOSMTP_REGION = os.getenv("TURBOSMTP_REGION", "global")
+TURBOSMTP_NO_EXPIRE = os.getenv("TURBOSMTP_NO_EXPIRE", "1")
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@db:5432/{DB_NAME}"
 engine = create_engine(DATABASE_URL)
@@ -242,8 +250,8 @@ with SessionLocal() as db:
     except Exception as e:
         print(f"Error durante la inicialización: {str(e)}")
 
-#esquemas
 
+#esquemas
 class UsuarioCreate(BaseModel):
     correo_usuario: str = Field(..., min_length=5, max_length=100)
     contraseña_usuario: str = Field(..., min_length=6) 
@@ -313,7 +321,6 @@ class PermisoEnPerfil(BaseModel):
     model_config = {
         "from_attributes": True
     }
-
 class PerfilResponse(BaseModel):
     id_usuario: uuid.UUID
     correo_usuario: str
@@ -448,48 +455,101 @@ def actualizar_ultima_conexion_usuario(db: Session, usuario_id: uuid.UUID, razon
         print(f"Error al actualizar última conexión: {str(e)}")
         return False
 
-# funcion para enviar correo con el codigo por n8n
-async def enviar_codigo_verificacion_resend(destinatario: str, codigo_verificacion: str) -> bool:
+_turbosmtp_token_cache = None
+_turbosmtp_token_expiry = None
+
+async def get_turbosmtp_auth_token() -> Optional[str]:
+    """
+    Authenticate with turboSMTP and get an authorization token.
+    """
+    global _turbosmtp_token_cache, _turbosmtp_token_expiry
+    
+    if (_turbosmtp_token_cache and _turbosmtp_token_expiry and 
+        datetime.utcnow() < _turbosmtp_token_expiry):
+        return _turbosmtp_token_cache
+    
     try:
+        auth_data = {
+            "email": TURBOSMTP_EMAIL,
+            "password": TURBOSMTP_PASSWORD,
+            "no_expire": TURBOSMTP_NO_EXPIRE
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://dashboard.serversmtp.com/api/authorize",
+                json=auth_data,
+                headers={"Content-Type": "application/json; charset=utf-8"},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                auth_token = result.get("auth")
+                
+                if auth_token:
+                    _turbosmtp_token_cache = auth_token
+                    _turbosmtp_token_expiry = datetime.utcnow() + timedelta(minutes=50)
+                    
+                    print(f"turboSMTP authentication successful")
+                    return auth_token
+                else:
+                    print(f"turboSMTP auth response missing token: {result}")
+            else:
+                print(f"turboSMTP auth failed: {response.status_code} - {response.text}")
+                
+    except Exception as e:
+        print(f"Exception during turboSMTP authentication: {str(e)}")
+    
+    return None
+
+async def enviar_codigo_verificacion_smtp(destinatario: str, codigo_verificacion: str) -> bool:
+    """
+    Envía código de verificación usando SMTP tradicional (recomendado)
+    """
+    try:
+        smtp_server = "pro.turbo-smtp.com"
+        smtp_port = 465  
+        smtp_user = TURBOSMTP_CONSUMER_KEY
+        smtp_password = TURBOSMTP_CONSUMER_SECRET
+        from_email = TURBOSMTP_FROM_EMAIL
+        
+        print(f"Conectando a SMTP: {smtp_server}:{smtp_port}")
+        print(f"Usuario: {smtp_user}")
+        
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Código de Verificación - Sistema de Autenticación"
+        msg['From'] = from_email
+        msg['To'] = destinatario
+        
+        # contenido HTML
         html_content = f"""
         <html>
         <body>
-            <h1>Código de Verificación</h1>
+            <h2>Código de Verificación</h2>
             <p>Tu código de verificación es: <strong>{codigo_verificacion}</strong></p>
-            <p>Ingresa este código en la página de verificación para continuar.</p>
             <p>Si no solicitaste este código, ignora este mensaje.</p>
         </body>
         </html>
         """
         
-        data = {
-            "correo": destinatario,
-            "codigo": codigo_verificacion
-        }
+        part_html = MIMEText(html_content, 'html')
+        msg.attach(part_html)
         
-        headers = {
-            "Authorization": f"Bearer {RESEND_API_KEY}",
-            "Content-Type": "application/json"
-        }
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://lyepez23.app.n8n.cloud/webhook/affb8262-d277-4e32-95b2-79ed4dc24e63",
-                json=data,
-                timeout=30.0
-            )
-            
-            if response.status_code == 200:
-                print(f"Email con código de verificación enviado exitosamente a {destinatario}")
-                return True
-            else:
-                print(f"Error enviando email: {response.status_code} - {response.text}")
-                return False
-                
+        print(f"Correo enviado exitosamente a {destinatario} vía SMTP")
+        return True
+        
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"Error de autenticación SMTP: {e}")
     except Exception as e:
-        print(f"Excepción enviando email: {str(e)}")
-        return False
+        print(f"Error SMTP: {str(e)}")
     
+    return False
+
 # crear tablas
 Base.metadata.create_all(bind=engine)
 
@@ -1105,18 +1165,17 @@ async def enviar_codigo_verificacion(
 ):
     """
     Enviar codigo de verificación al usuario
-    Comprobar que realmente sea su correo
     """
     try:
-        # enviar el correo
+        # Enviar el correo
         background_tasks.add_task(
-            enviar_codigo_verificacion_resend, 
+            enviar_codigo_verificacion_smtp, 
             datos.correo_usuario, 
             datos.codigo_verificacion
         )
         
         return {
-            "mensaje": "Código de verificación enviado exitosamente",
+            "mensaje": "Código de verificación en proceso de envío",
             "correo_enviado": True,
             "correo_destino": datos.correo_usuario
         }
@@ -1124,9 +1183,9 @@ async def enviar_codigo_verificacion(
     except Exception as e:
         raise HTTPException(
             status_code=500, 
-            detail=f"Error al enviar código de verificación: {str(e)}"
+            detail=f"Error al programar envío: {str(e)}"
         )
-
+    
 @app.get("/historial-usuarios", response_model=list[HistorialUsuarioResponse], tags=["Historial de Usuarios"])
 def obtener_todo_el_historial(
     db: Session = Depends(get_db),
@@ -1337,4 +1396,3 @@ def eliminar_entrada_historial(
             status_code=500, 
             detail=f"Error al eliminar la entrada del historial: {str(e)}"
         )
-    
