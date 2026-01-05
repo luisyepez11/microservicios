@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import axios from 'axios'
+import Clientesupabase from '@/clienteSupabes'
 
 const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
@@ -43,27 +44,76 @@ const handleImageUpload = (event) => {
  }
 }
 
-// *** CÓDIGO CORREGIDO para usar FormData (multipart/form-data) ***
+const subirImagenes = async (imagenData) => {
+  try {
+    let file;
+    
+    if (typeof imagenData === 'string' && imagenData.startsWith('data:image')) {
+      const base64Data = imagenData.split(',')[1];
+      const binaryData = atob(base64Data);
+      const arrayBuffer = new ArrayBuffer(binaryData.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      for (let i = 0; i < binaryData.length; i++) {
+        uint8Array[i] = binaryData.charCodeAt(i);
+      }
+      const blob = new Blob([uint8Array], { type: 'image/png' });
+      file = new File([blob], 'producto.png', { type: 'image/png' });
+    } else if (imagenData instanceof File) {
+      file = imagenData;
+    } else {
+      console.error('Formato de imagen no soportado');
+      return null;
+    }
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    const fileExt = file.name.split('.').pop() || 'png';
+    const fileName = `${timestamp}_${random}.${fileExt}`;
+    const filePath = `productos/${fileName}`;
+
+    console.log('Subiendo imagen:', fileName);
+
+    const { data, error } = await Clientesupabase.storage
+      .from('productos')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error de storage:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = Clientesupabase.storage
+      .from('productos')
+      .getPublicUrl(filePath);
+
+    console.log('Imagen subida:', publicUrl);
+    return publicUrl;
+
+  } catch (error) {
+    console.error('Error subiendo imagen:', error.message);
+    alert(`Error al subir imagen: ${error.message}`);
+    return null;
+  }
+};
+
 const guardarProducto = async () => {
  if (!producto.value.nombre || !producto.value.precio || !producto.value.cantidad) {
   alert('Por favor, completa los campos obligatorios: Nombre, Precio y Cantidad.')
   return
  }
- 
- // 1. Crear el objeto FormData para enviar archivos
  const formData = new FormData()
- 
- // 2. Añadir todos los campos de texto
  formData.append('name', producto.value.nombre)
  formData.append('category_id', 1489)
  formData.append('price', producto.value.precio)
  formData.append('description', producto.value.descripcion)
  formData.append('cantidad', producto.value.cantidad) 
  
- // 3. Añadir el ARCHIVO BINARIO
  if (producto.value.imagen) {
-
-  formData.append('image_url', producto.value.imagen)
+  const url_imagen = await subirImagenes(producto.value.imagen)
+  formData.append('image_url', url_imagen)
  }
  
  try {
@@ -85,6 +135,7 @@ const guardarProducto = async () => {
       id_producto:response.data,
     cantidad:producto.value.cantidad
     })
+    
   console.log('Producto guardado:', response.data)
   alert('Producto guardado exitosamente!')
   
@@ -248,4 +299,3 @@ cargar()
   </div>
  </div>
 </template>
-```

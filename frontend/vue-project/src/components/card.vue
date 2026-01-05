@@ -32,7 +32,7 @@ defineProps({
       class="w-full aspect-square bg-slate-900 flex items-center justify-center overflow-hidden"
     >
       <img
-        src=""
+        :src= "producto.image_url"
         alt="Dos peras en un fondo blanco"
         class="w-full h-full object-cover"
       >

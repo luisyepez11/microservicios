@@ -37,7 +37,7 @@ const enviarCodigoCorreo = async () => {
     console.error('No hay correo proporcionado')
     return
   }
-
+  console.log(codigo.value)
   try {
     const res = await fetch('http://localhost:8001/enviar-codigo-verificacion', {
       method: 'POST',

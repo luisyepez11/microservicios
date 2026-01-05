@@ -107,6 +107,9 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
+const realizarCompra = () =>{
+  console.log(props.productos)
+}
 </script>
 
 <template>
@@ -268,6 +271,7 @@ onUnmounted(() => {
                 </button>
                 <button
                   class="px-6 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition-colors shadow-sm hover:shadow-md"
+                  @click="realizarCompra"
                 >
                   Finalizar compra
                 </button>
