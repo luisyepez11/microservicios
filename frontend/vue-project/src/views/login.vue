@@ -29,8 +29,8 @@ const validarContrasena = (value) => {
   if (!value) {
     return 'Ingrese una contraseña.'
   }
-  if (value.length < 10) {
-    return 'La contraseña debe tener al menos 10 caracteres.'
+  if (value.length < 9) {
+    return 'La contraseña debe tener al menos 9 caracteres.'
   }
   return ''
 }

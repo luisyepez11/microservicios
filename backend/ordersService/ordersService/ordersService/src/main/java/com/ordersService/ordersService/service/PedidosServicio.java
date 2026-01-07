@@ -22,12 +22,21 @@ public class PedidosServicio {
     }
     @Transactional
     public Pedidos crearPedido(Pedidos pedido){
-        return repositoriopedidos.save(pedido);
+        Pedidos pd = repositoriopedidos.save(pedido);
+        
+        return pd;
     }
 
     @Transactional
     public Pedidos pedido(UUID idPedido){
         return repositoriopedidos.getById(idPedido);
+    }
+
+    @Transactional
+    public Pedidos pedidoPagado(UUID idPedido){
+        Pedidos pedido = pedido(idPedido);
+        pedido.setEstado("PAGADO");
+        return repositoriopedidos.save(pedido);
     }
 
 }

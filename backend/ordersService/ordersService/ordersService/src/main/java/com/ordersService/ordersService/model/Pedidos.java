@@ -21,4 +21,7 @@ public class Pedidos {
     @Column(nullable=false)
     private String  estado = "CREADO";
     
+    public void setEstado(String estado){
+        this.estado=estado;
+    }
 }

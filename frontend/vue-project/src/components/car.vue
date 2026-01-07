@@ -1,4 +1,5 @@
 <script setup>
+import axios from 'axios'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Props
@@ -18,7 +19,7 @@ const props = defineProps({
 })
 console.log(props.productos)
 // Emits
-const emit = defineEmits(['close', 'seleccionar', 'actualizar-cantidad', 'eliminar-producto'])
+const emit = defineEmits(['close', 'seleccionar', 'actualizar-cantidadProducto', 'eliminar-producto'])
 
 // Estado reactivo
 const productoSeleccionado = ref(null)
@@ -38,22 +39,22 @@ const resetModal = () => {
   productoSeleccionado.value = null
 }
 
-// Incrementar cantidad
-const incrementarCantidad = (producto) => {
-  const nuevaCantidad = producto.cantidad + 1
-  emit('actualizar-cantidad', { 
+// Incrementar cantidadProducto
+const incrementarcantidadProducto = (producto) => {
+  const nuevacantidadProducto = producto.cantidadProducto + 1
+  emit('actualizar-cantidadProducto', { 
     producto, 
-    nuevaCantidad 
+    nuevacantidadProducto 
   })
 }
 
-// Decrementar cantidad
-const decrementarCantidad = (producto) => {
-  if (producto.cantidad > 1) {
-    const nuevaCantidad = producto.cantidad - 1
-    emit('actualizar-cantidad', { 
+// Decrementar cantidadProducto
+const decrementarcantidadProducto = (producto) => {
+  if (producto.cantidadProducto > 1) {
+    const nuevacantidadProducto = producto.cantidadProducto - 1
+    emit('actualizar-cantidadProducto', { 
       producto, 
-      nuevaCantidad 
+      nuevacantidadProducto 
     })
   }
 }
@@ -63,13 +64,13 @@ const eliminarProducto = (producto) => {
   emit('eliminar-producto', producto)
 }
 
-// Actualizar cantidad manualmente
-const actualizarCantidad = (producto, event) => {
-  const nuevaCantidad = parseInt(event.target.value) || 1
-  if (nuevaCantidad > 0) {
-    emit('actualizar-cantidad', { 
+// Actualizar cantidadProducto manualmente
+const actualizarcantidadProducto = (producto, event) => {
+  const nuevacantidadProducto = parseInt(event.target.value) || 1
+  if (nuevacantidadProducto > 0) {
+    emit('actualizar-cantidadProducto', { 
       producto, 
-      nuevaCantidad 
+      nuevacantidadProducto 
     })
   }
 }
@@ -84,12 +85,12 @@ const formatearPrecio = (precio) => {
 
 // Calcular total
 const total = computed(() => {
-  return props.productos.reduce((sum, producto) => sum + (producto.precio * producto.cantidad), 0)
+  return props.productos.reduce((sum, producto) => sum + (producto.precio * producto.cantidadProducto), 0)
 })
 
-// Calcular cantidad total de productos
-const cantidadTotal = computed(() => {
-  return props.productos.reduce((sum, producto) => sum + producto.cantidad, 0)
+// Calcular cantidadProducto total de productos
+const cantidadProductoTotal = computed(() => {
+  return props.productos.reduce((sum, producto) => sum + producto.cantidadProducto, 0)
 })
 
 // Cerrar modal con ESC
@@ -107,8 +108,21 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
-const realizarCompra = () =>{
-  console.log(props.productos)
+const realizarCompra = async () =>{
+
+  try {
+    const tokenGuardado = localStorage.getItem('authToken');
+    const response =await axios.get("http://127.0.0.1:8001/mi-perfil", {
+    headers: {
+        'Authorization': `Bearer ${tokenGuardado}`
+    }})
+    const result = await axios.post('http://localhost:8080/crearPedido',{idUsuariPedido:response.data.id_usuario})
+    const resultPedidoProducto = await axios.post(`http://localhost:8080/pedidosProductos/${result.data.idPedido}`,props.productos)
+    console.log(resultPedidoProducto.data)
+  } catch (error) {
+    console.log(error)
+  }
+  location.href="/product"
 }
 </script>
 
@@ -143,7 +157,7 @@ const realizarCompra = () =>{
               <div>
                 <h2 class="text-2xl font-bold">{{ titulo }}</h2>
                 <p class="text-sm text-slate-400 mt-1">
-                  {{ cantidadTotal }} producto{{ cantidadTotal !== 1 ? 's' : '' }} en total
+                  {{ cantidadProductoTotal }} producto{{ cantidadProductoTotal !== 1 ? 's' : '' }} en total
                 </p>
               </div>
               <button
@@ -174,7 +188,7 @@ const realizarCompra = () =>{
             <div v-else class="divide-y divide-slate-800">
               <div
                 v-for="(producto, index) in productos"
-                :key="producto.id || index"
+                :key="producto.id"
                 class="p-4 transition-colors"
                 :class="[
                   'hover:bg-slate-800/80',
@@ -203,29 +217,29 @@ const realizarCompra = () =>{
                       </div>
                       
                       <div class="flex items-center justify-between mt-3">
-                        <!-- Controles de cantidad -->
+                        <!-- Controles de cantidadProducto -->
                         <div class="flex items-center space-x-3">
-                          <span class="text-sm text-slate-400 font-medium">Cantidad:</span>
+                          <span class="text-sm text-slate-400 font-medium">cantidadProducto:</span>
                           <div class="flex items-center border border-slate-600 rounded-lg bg-slate-900">
                             <button
-                              @click="decrementarCantidad(producto)"
+                              @click="decrementarcantidadProducto(producto)"
                               class="px-3 py-1 text-slate-300 hover:bg-slate-800 transition-colors rounded-l-lg"
-                              :disabled="producto.cantidad <= 1"
+                              :disabled="producto.cantidadProducto <= 1"
                               :class="{
-                                'opacity-40 cursor-not-allowed': producto.cantidad <= 1
+                                'opacity-40 cursor-not-allowed': producto.cantidadProducto <= 1
                               }"
                             >
                               -
                             </button>
                             <input
                               type="number"
-                              :value="producto.cantidad"
-                              @change="actualizarCantidad(producto, $event)"
+                              :value="producto.cantidadProducto"
+                              @change="actualizarcantidadProducto(producto, $event)"
                               min="1"
                               class="w-12 text-center border-x border-slate-600 py-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                             <button
-                              @click="incrementarCantidad(producto)"
+                              @click="incrementarcantidadProducto(producto)"
                               class="px-3 py-1 text-slate-300 hover:bg-slate-800 transition-colors rounded-r-lg"
                             >
                               +
@@ -239,7 +253,7 @@ const realizarCompra = () =>{
                             {{ formatearPrecio(producto.precio) }} c/u
                           </div>
                           <div class="text-lg font-bold text-emerald-400">
-                            {{ formatearPrecio(producto.precio * producto.cantidad) }}
+                            {{ formatearPrecio(producto.precio * producto.cantidadProducto) }}
                           </div>
                         </div>
                       </div>
@@ -258,7 +272,7 @@ const realizarCompra = () =>{
             <div class="flex justify-between items-center">
               <div>
                 <p class="text-sm text-slate-400">
-                  Total ({{ cantidadTotal }} producto{{ cantidadTotal !== 1 ? 's' : '' }})
+                  Total ({{ cantidadProductoTotal }} producto{{ cantidadProductoTotal !== 1 ? 's' : '' }})
                 </p>
                 <p class="text-2xl font-bold text-slate-100">{{ formatearPrecio(total) }}</p>
               </div>

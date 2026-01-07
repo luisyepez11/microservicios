@@ -26,25 +26,25 @@ try {
 }
 cargar()
 const agregarAlCarrito = (producto) => {
- 
-  const productoEnCarrito = productos.value.find(item => item.id === producto.product_id)
+  console.log(productos.value)
+  const productoEnCarrito = productos.value.find(item => item.idProducto === producto.product_id)
   console.log(productoEnCarrito)
   if (productoEnCarrito) {
     // Si ya existe, verificar que no exceda el stock
-    const cantidadTotal = productoEnCarrito.cantidad + (producto.cantidad || 1)
+    const cantidadProductoTotal = productoEnCarrito.cantidadProducto + (producto.cantidadProducto || 1)
     
     
-    // Actualizar cantidad
-    productoEnCarrito.cantidad = cantidadTotal
+    // Actualizar cantidadProducto
+    productoEnCarrito.cantidadProducto = cantidadProductoTotal
     console.log(`Producto ${producto.nombre} actualizado en el carrito`)
   } else {
     // Si no existe, agregarlo al carrito
     const productoAAgregar = {
-      ...{id:producto.product_id,
+      ...{idProducto:producto.product_id,
         nombre:producto.name,
         precio:producto.price
       },
-      cantidad: producto.cantidad || 1
+      cantidadProducto: producto.cantidadProducto || 1
     }
     
     productos.value.push(productoAAgregar)

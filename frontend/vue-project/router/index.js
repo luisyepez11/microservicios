@@ -11,7 +11,8 @@ import addproductos from "@/views/addProductos.vue";
 import Codigo from '../src/views/codigo.vue';
 import gestion_producto from "@/views/gestion_producto.vue";
 import UserDetail from "@/views/userDetail.vue";
-
+import mis_pedidos from "@/views/mis_pedidos.vue";
+import formulario_pago from "@/views/formulario_pago.vue";
 const routes = [
     {
         path: '/',
@@ -61,6 +62,14 @@ const routes = [
         path: '/gestion_producto',
         name: 'gestion_producto',
         component: gestion_producto
+    },{
+        path: '/mis_pedidos',
+        name: 'mis_pedidos',
+        component: mis_pedidos
+    },{
+        path:'/formulario_pago/:id',
+        name: 'formulario_pago',
+        component: formulario_pago
     }
 ];
 

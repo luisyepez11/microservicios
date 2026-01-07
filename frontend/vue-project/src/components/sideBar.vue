@@ -49,6 +49,16 @@ const tienePermiso = (nombrePermiso) => {
           Productos
         </a>
       </li>
+      <li 
+        class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
+      >
+        <a
+          class="no-underline block py-3 px-6 text-center font-medium text-slate-100 hover:text-emerald-400"
+          href="http://localhost:5173/mis_pedidos"
+        >
+          Mis Pedidos
+        </a>
+      </li>
       <li v-if="tienePermiso('vista_stock')"
         class="w-full rounded-lg mx-2 hover:bg-slate-800 transition-colors duration-200"
       >

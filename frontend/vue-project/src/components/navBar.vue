@@ -29,12 +29,13 @@ const handleSeleccionar = (producto) => {
   showModal.value = false
 }
 
-const handleActualizarCantidad = ({ producto, nuevaCantidad }) => {
-  const productoIndex = props.productos.findIndex(p => p.id === producto.id)
+const handleActualizarcantidadProducto = ({ producto, nuevacantidadProducto }) => {
+  console.log(props.productos)
+  const productoIndex = props.productos.findIndex(p => p.idProducto === producto.idProducto)
   console.log(productoIndex)
   if (productoIndex !== -1) {
-    props.productos[productoIndex].cantidad = nuevaCantidad
-    console.log(`Cantidad actualizada: ${producto.nombre} -> ${nuevaCantidad}`)
+    props.productos[productoIndex].cantidadProducto = nuevacantidadProducto
+    console.log(`cantidadProducto actualizada: ${producto.nombre} -> ${nuevacantidadProducto}`)
   }
 }
 
@@ -46,8 +47,8 @@ const handleEliminarProducto = (producto) => {
   }
 }
 
-const cantidadTotalProductos = () => {
-  return props.productos.reduce((sum, producto) => sum + producto.cantidad, 0)
+const cantidadProductoTotalProductos = () => {
+  return props.productos.reduce((sum, producto) => sum + producto.cantidadProducto, 0)
 }
 
 const cerrarSesion = () => {
@@ -79,12 +80,12 @@ const cerrarSesion = () => {
             @click="openModal"
           >
             Carrito
-            <!-- Badge con cantidad total de productos -->
+            <!-- Badge con cantidadProducto total de productos -->
             <span 
-              v-if="cantidadTotalProductos() > 0"
+              v-if="cantidadProductoTotalProductos() > 0"
               class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
             >
-              {{ cantidadTotalProductos() }}
+              {{ cantidadProductoTotalProductos() }}
             </span>
           </button>
         </div>
@@ -98,7 +99,7 @@ const cerrarSesion = () => {
       titulo="Mi Carrito de Compras"
       @close="handleClose"
       @seleccionar="handleSeleccionar"
-      @actualizar-cantidad="handleActualizarCantidad"
+      @actualizar-cantidadProducto="handleActualizarcantidadProducto"
       @eliminar-producto="handleEliminarProducto"
     />
   </header>
