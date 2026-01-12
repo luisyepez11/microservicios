@@ -118,6 +118,13 @@ const realizarCompra = async () =>{
     }})
     const result = await axios.post('http://localhost:8080/crearPedido',{idUsuariPedido:response.data.id_usuario})
     const resultPedidoProducto = await axios.post(`http://localhost:8080/pedidosProductos/${result.data.idPedido}`,props.productos)
+    const listaStock =  props.productos.map(p =>{
+      return {id_producto:p.idProducto,cantidad:p.stock-p.cantidadProducto}
+    })
+    const resultDecrementoStock = await axios.put(`http://localhost:8003/api/actualizarProductos`,listaStock)
+    const notificacionPago = await axios.post(`http://localhost:8090/api/notificacion/pedido`,{
+    correo:response.data.correo_usuario
+    })
     console.log(resultPedidoProducto.data)
   } catch (error) {
     console.log(error)

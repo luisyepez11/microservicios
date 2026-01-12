@@ -19,20 +19,29 @@ try {
     }
 })
     const productos = await axios.get("http://localhost:8000/api/products")
-    listaProductos.value = productos.data;
+    const CantidadesProductos = productos.data.map(async p =>{
+  
+      const cantidad = await axios.get(`http://localhost:8003/api/${p.product_id}`)
+      p.stock= cantidad.data.cantidad 
+      return p
+    });
+    listaProductos.value =await Promise.all(CantidadesProductos)
 } catch (error) {
     console.log(error)
 }
 }
 cargar()
 const agregarAlCarrito = (producto) => {
-  console.log(productos.value)
   const productoEnCarrito = productos.value.find(item => item.idProducto === producto.product_id)
-  console.log(productoEnCarrito)
   if (productoEnCarrito) {
     // Si ya existe, verificar que no exceda el stock
-    const cantidadProductoTotal = productoEnCarrito.cantidadProducto + (producto.cantidadProducto || 1)
-    
+    let cantidadProductoTotal = productoEnCarrito.cantidadProducto + 1
+    if (cantidadProductoTotal>=producto.stock+1){
+      alert("La Solicitud supero lo disponible")
+      return false;
+    }else{
+      cantidadProductoTotal = productoEnCarrito.cantidadProducto +1
+    }
     
     // Actualizar cantidadProducto
     productoEnCarrito.cantidadProducto = cantidadProductoTotal
@@ -42,7 +51,8 @@ const agregarAlCarrito = (producto) => {
     const productoAAgregar = {
       ...{idProducto:producto.product_id,
         nombre:producto.name,
-        precio:producto.price
+        precio:producto.price,
+        stock:producto.stock
       },
       cantidadProducto: producto.cantidadProducto || 1
     }

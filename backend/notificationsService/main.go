@@ -9,13 +9,11 @@ import (
 )
 
 func main() {
-	// 1. Cargar el archivo .env
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error al cargar el archivo .env")
 	}
 
-	// 2. Ahora puedes acceder a ellas en cualquier parte
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8090"

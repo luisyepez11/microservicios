@@ -34,13 +34,19 @@ const handleActualizarcantidadProducto = ({ producto, nuevacantidadProducto }) =
   const productoIndex = props.productos.findIndex(p => p.idProducto === producto.idProducto)
   console.log(productoIndex)
   if (productoIndex !== -1) {
+    if (nuevacantidadProducto>=producto.stock+1){
+      alert("La Solicitud supero lo disponible")
+      props.productos[productoIndex].cantidadProducto = producto.stock
+      handleClose()
+      return false
+    }
     props.productos[productoIndex].cantidadProducto = nuevacantidadProducto
     console.log(`cantidadProducto actualizada: ${producto.nombre} -> ${nuevacantidadProducto}`)
   }
 }
 
 const handleEliminarProducto = (producto) => {
-  const productoIndex = props.productos.findIndex(p => p.id === producto.id)
+  const productoIndex = props.productos.findIndex(p => p.idProducto === producto.idProducto)
   if (productoIndex !== -1) {
     props.productos.splice(productoIndex, 1)
     console.log(`Producto eliminado: ${producto.nombre}`)

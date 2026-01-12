@@ -8,7 +8,7 @@ import router from '../../router';
 const route = useRoute();
 // --- ESTADO DEL FORMULARIO ---
 const procesando = ref(false)
-
+const productos = ref([])
 const pago = ref({
   monto: null,
   metodo: 'tarjeta', // 'tarjeta', 'pago_movil', 'efectivo'
@@ -29,7 +29,6 @@ const bancosVenezuela = ['Banco de Venezuela', 'Banesco', 'Mercantil', 'Provinci
 // --- FUNCIONES ---
 const cargar = async () =>{
   const productosResult = await axios.get(`http://localhost:8080/pedidosProductos/${route.params.id}`)
-  console.log(productosResult.data)
   const calculo = productosResult.data.map(async producto =>{
     const productoResul = await axios.get(`http://localhost:8000/api/products/${producto.idProducto}`)
     return producto.cantidadProducto*productoResul.data.price
@@ -93,6 +92,9 @@ const procesarPago = async () => {
           ,metodoPago:pago.value.metodo
     })
     const cambioEstado = await axios.put(`http://localhost:8080/pagarPedido/${route.params.id}`)
+    const notificacionPago = await axios.post(`http://localhost:8090/api/notificacion/pago`,{
+    correo:usuario.data.correo_usuario
+    })
     await new Promise(resolve => setTimeout(resolve, 1500))
 
     alert('Pago registrado exitosamente')

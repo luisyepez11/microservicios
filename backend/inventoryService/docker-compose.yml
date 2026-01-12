@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # Servicio de la aplicación Rust (Axum)
@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     # Reinicia automáticamente si falla
+      network: host
     restart: always
     ports:
       - "8003:8003"
@@ -15,7 +16,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-
   # Servicio de la base de datos PostgreSQL
   db:
     image: postgres:16-alpine

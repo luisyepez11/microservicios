@@ -46,7 +46,9 @@ defineProps({
       <p class="text-2xl font-normal text-slate-300 mb-4">
         ${{ precio }}
       </p>
-
+      <p class=" font-normal text-slate-300 mb-4">
+        Cantidad : {{ producto.stock }}
+      </p>
       <button
         class="w-full px-4 py-2 rounded-lg text-base font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition duration-150 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-60"
        @click="agregar(producto)"

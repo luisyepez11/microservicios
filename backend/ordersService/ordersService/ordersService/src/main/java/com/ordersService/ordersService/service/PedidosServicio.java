@@ -38,5 +38,16 @@ public class PedidosServicio {
         pedido.setEstado("PAGADO");
         return repositoriopedidos.save(pedido);
     }
+    @Transactional
+    public Pedidos pedidoEntregado(UUID idPedido){
+        Pedidos pedido = pedido(idPedido);
+        pedido.setEstado("ENTREGADO");
+        return repositoriopedidos.save(pedido);
+    }
+
+    @Transactional
+    public List<Pedidos> pedidosUsuarios(UUID idUsuariPedido){
+        return repositoriopedidos.findByidUsuariPedido(idUsuariPedido);
+    }
 
 }

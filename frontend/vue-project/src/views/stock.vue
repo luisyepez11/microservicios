@@ -17,7 +17,7 @@ try {
         'Authorization': `Bearer ${tokenGuardado}`
     }
 })
-    const listastocks = await axios.get("http://localhost:8003/api")
+    const listastocks = await axios.get("http://localhost:8003/api/inventario")
     stocks.value = listastocks.data;
 } catch (error) {
     console.log(error)

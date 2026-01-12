@@ -12,5 +12,6 @@ import com.ordersService.ordersService.model.PedidosProductos;
 @Repository
 public interface PedidosRepository extends  JpaRepository<Pedidos, UUID>{
 
+    List<Pedidos> findByidUsuariPedido(UUID idUsuariPedido);
 
 }

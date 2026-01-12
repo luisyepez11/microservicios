@@ -13,7 +13,7 @@ use sqlx::{FromRow, PgPool, pool, postgres::PgPoolOptions, query};
 #[tokio::main]
 async fn main() {
     // 1. Configuración DB
-    let database_url = "postgres://postgres:prueba123@db:5432/stock_api";
+    let database_url = "postgres://postgres:prueba123@localhost:5632/stock_api";
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(10))
@@ -153,6 +153,50 @@ async  fn put_cantidad_stock_aumento(State(pool): State<PgPool>,Json(body): Json
     }
 }
 
+async  fn put_cantidad_stock_list(State(pool): State<PgPool>,Json(body): Json<Vec<Stock>>)  -> impl IntoResponse{
+    
+    let mut tx = match pool.begin().await{
+        Ok(tx) => tx,
+        Err(e) => {
+            return (
+               axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error al iniciar transacción: {}", e),
+            ).into_response();
+        }
+    };
+    for stock in body{ 
+        let mut cantidad = stock.cantidad;
+        let mut id_producto = stock.id_producto;
+        let result = sqlx::query("UPDATE stock SET cantidad=$1 WHERE id_producto=$2")
+            .bind(cantidad)
+            .bind(id_producto)
+            .execute(&mut *tx)
+            .await;
+        if let Err(e) = result {
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error al modificar stock del producto {}: {}", stock.id_producto, e),
+            ).into_response();
+        };
+    };
+    match tx.commit().await {
+        Ok(_) => {
+            println!("Lista de stock actualizada correctamente");
+            (
+                axum::http::StatusCode::CREATED,
+                "Stocks modificados exitosamente"
+            ).into_response()
+        },
+        Err(e) => {
+            eprintln!("Error al hacer commit: {}", e);
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error al confirmar cambios: {}", e),
+            ).into_response()
+        }
+    }
+}
+
 async fn handler_db_check(State(pool): State<PgPool>) -> impl IntoResponse {
     let row: (i64,) = sqlx::query_as("SELECT 1")
         .fetch_one(&pool)
@@ -169,10 +213,11 @@ fn routes_static() -> Router {
 fn routes() -> Router<PgPool> {
     Router::new()
         /*get */
-        .route("/api", get(get_stocks)) 
+        .route("/api/inventario", get(get_stocks)) 
         .route("/api/{id_producto}", get(get_stock))
         /*put */
         .route("/api", put(put_cantidad_stock_aumento))
+        .route("/api/actualizarProductos", put(put_cantidad_stock_list))
         /*post */
         .route("/api", post(post_stock))
 }

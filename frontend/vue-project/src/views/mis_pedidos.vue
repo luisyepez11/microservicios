@@ -1,11 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref,onMounted } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import axios from 'axios';
+import Productos from './productos.vue';
 const pedidos = ref({})
 const fechaActual = ref(new Date().toLocaleDateString())
-
+const usuario = ref('')
+const estados = ref('')
+const estadosPedidos = ref('file:///C:/Users/hp/Downloads/Gemini_Generated_Image_10c2hn10c2hn10c2.png')
 const cerrarSesion = () => {
     localStorage.removeItem('authToken');
 }
@@ -17,14 +20,41 @@ try {
         'Authorization': `Bearer ${tokenGuardado}`
     }
 })
-    const listaPedidos = await axios.get("http://localhost:8080",{idUsuariPedido:response.data.id_usuario})
+    usuario.value = response.data
+    const listaPedidos = await axios.get(`http://localhost:8080/pedidosUsuarios/${usuario.value.id_usuario}`)
+    
     pedidos.value = listaPedidos.data;
     console.log(pedidos.value)
 } catch (error) {
     console.log(error)
 }
 }
-cargar()
+const simulacionPago = async (productosPnientes)=>{
+  console.log(pedidos.value)
+  const productosPendientes =await pedidos.value.map(p =>{
+    if (p.estado==="PAGADO"){
+        return p
+    }
+  })
+  console.log(productosPendientes)
+  estados.value = "Pago recibidos, pedido en proceso de envidó"
+  await new Promise(resolve => setTimeout(resolve, 10000))
+  estados.value = "Pedido enviado"
+  await new Promise(resolve => setTimeout(resolve, 20000))
+  estados.value = "Pedido ya en su destino"
+  productosPendientes.map(async p=>{
+    if (p !== undefined){
+    const cambioEstado = await axios.put(`http://localhost:8080/entregarPedido/${p.idPedido}`)
+    const notificacionEntrega = await axios.post(`http://localhost:8090/api/notificacion/entregado`,{
+    correo:usuario.value.correo_usuario
+    })
+  }}
+  )
+}
+onMounted(async() => {
+  await cargar()
+  simulacionPago();
+});
 </script>
 
 <template>
@@ -65,10 +95,19 @@ cargar()
               class="bg-slate-900/70 hover:bg-slate-800 transition duration-150"
               v-for="pedido in pedidos"
             >
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+              <td v-if="pedido.estado !=='PAGADO'" class="px-6 py-4 whitespace-nowrap text-sm text-slate-100" >
                 <div class="text-3xl"> 🛒 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+              <td v-if="pedido.estado ==='PAGADO'" class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                 <img v-if="estados ==='Pedido ya en su destino'" class="rounded-2xl " src='file:///C:/Users/hp/Downloads/Gemini_Generated_Image_10c2hn10c2hn10c2.png' alt="" width="100px">
+                 <img v-if="estados ==='Pedido enviado'" class="rounded-2xl transform -scale-x-100" src='file:///C:/Users/hp/Downloads/pixverse_mp4_media_web_ori_4ad5ea0a-85b2-4e4f-8bea-9fb6f58ae3ae_seed616307380.gif' alt="" width="100px">
+                 <img v-if="estados ==='Pago recibidos, pedido en proceso de envidó'" class="rounded-2xl transform -scale-x-100" src='file:///C:/Users/hp/Downloads/Reloj___%20GIF.gif' alt="" width="100px">
+                 
+              </td>
+              <td v-if="pedido.estado ==='PAGADO'" class=" flex text-center px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                {{ estados }}
+              </td>
+              <td v-if="pedido.estado !=='PAGADO'" class=" flex text-center px-6 py-4 whitespace-nowrap text-sm text-slate-100">
                 {{ pedido.estado }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">

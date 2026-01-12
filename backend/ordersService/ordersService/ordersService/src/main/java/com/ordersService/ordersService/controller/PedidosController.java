@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ordersService.ordersService.model.Pedidos;
 import com.ordersService.ordersService.service.PedidosServicio;
 
+import jakarta.websocket.server.PathParam;
+
+import org.springframework.web.bind.annotation.RequestParam;
+
+
 
 
 
@@ -41,12 +46,21 @@ public ResponseEntity<Pedidos> getPedidos(@PathVariable UUID idPedido) {
 }
 
     @PostMapping("/crearPedido")
-    public Pedidos postMethodName(@RequestBody Pedidos pedidos) {
+    public Pedidos crearPedido(@RequestBody Pedidos pedidos) {
         return servicioPedidos.crearPedido(pedidos);
     }
     @PutMapping("/pagarPedido/{idPedido}")
-    public Pedidos putMethodName(@PathVariable UUID idPedido) {
+    public Pedidos pagarPedido(@PathVariable UUID idPedido) {
         return servicioPedidos.pedidoPagado(idPedido);
+    }
+    @PutMapping("/entregarPedido/{idPedido}")
+    public Pedidos entregarPedido(@PathVariable UUID idPedido) {
+        return servicioPedidos.pedidoEntregado(idPedido);
+    }
+    
+    @GetMapping("/pedidosUsuarios/{idUsuariPedido}")
+    public List<Pedidos> pedidosUsuarios(@PathVariable UUID idUsuariPedido) {
+        return servicioPedidos.pedidosUsuarios(idUsuariPedido);
     }
     
     
