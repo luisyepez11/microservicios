@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import axios from 'axios';
+import { useRouter } from 'vue-router';
 const stocks = ref({})
 const fechaActual = ref(new Date().toLocaleDateString())
+const router = useRouter()
 
 const cerrarSesion = () => {
     localStorage.removeItem('authToken');
@@ -18,10 +20,18 @@ try {
     }
 })
     const listastocks = await axios.get("http://localhost:8003/api/inventario")
-    stocks.value = listastocks.data;
+    const listastockNombre = listastocks.data.map(async p=>{
+      const dataProducto = await axios.get(`http://localhost:8000/api/products/${p.id_producto}`)
+      p.nombre =  dataProducto.data.name
+      return p
+    })
+    stocks.value =await Promise.all(listastockNombre);
 } catch (error) {
     console.log(error)
 }
+}
+const registrar = (id)=>{
+  router.push(`/registrarLote/${id}`)
 }
 cargar()
 </script>
@@ -65,7 +75,7 @@ cargar()
               v-for="stock in stocks"
             >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
-                {{ stock.id_producto }}
+                {{ stock.nombre }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
                 {{ stock.cantidad }}
@@ -73,7 +83,8 @@ cargar()
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
                 <button
                   class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg hover:bg-emerald-400 active:scale-[0.98] transition duration-150 font-semibold shadow-sm hover:shadow-md"
-                >
+                  @click="registrar(stock.id_producto)"
+                  >
                   ver
                 </button>
               </td>

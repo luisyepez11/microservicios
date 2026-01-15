@@ -79,6 +79,7 @@ const productos = ref([
       <NavBar :productos="productos"></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        
         <div class="grid px-4 py-6 sm:px-0 grid-cols-5 gap-6">
           <Card v-for="value in listaProductos"
           :nombre="value.name" :precio="value.price" :agregar="agregarAlCarrito" :producto="value"></Card>

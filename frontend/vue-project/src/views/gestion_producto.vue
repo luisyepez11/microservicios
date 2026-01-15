@@ -4,9 +4,12 @@ import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import Card from '@/components/card.vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+
 const usuario = ref('Usuario')
 const fechaActual = ref(new Date().toLocaleDateString())
 const listaProductos = ref({})
+const router = useRouter()
 const cerrarSesion = () => {
     localStorage.removeItem('authToken');
 }
@@ -18,14 +21,25 @@ try {
         'Authorization': `Bearer ${tokenGuardado}`
     }
 })
-  const productos = await axios.get("http://localhost:8000/api/products")
-    listaProductos.value = productos.data;
-    console.log(response.data)
+    const productos = await axios.get("http://localhost:8000/api/products")
+    const CantidadesProductos = productos.data.map(async p =>{
+  
+      const cantidad = await axios.get(`http://localhost:8003/api/${p.product_id}`)
+      p.stock= cantidad.data.cantidad 
+      return p
+    });
+    listaProductos.value =await Promise.all(CantidadesProductos)
 } catch (error) {
     console.log(error)
 }
 }
 cargar()
+
+const modificarProducto = (producto) => {
+  router.push(`/modificar-product/${producto.product_id}`)
+}
+const productos = ref([
+])
 </script>
 
 <template>
@@ -36,10 +50,10 @@ cargar()
     <!-- Main Content -->
     <div class="flex-1 ml-40">
       <!-- Navbar -->
-      <NavBar></NavBar>
+      <NavBar :productos="productos"></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-              <div class="flex justify-end px-4 mb-4">
+        <div class="flex justify-end px-4 mb-4">
               <router-link to="/add-product">
           <button
             class="px-4 py-2 rounded-lg font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] transition shadow-sm hover:shadow-md"
@@ -48,10 +62,9 @@ cargar()
           </button>
           </router-link>
         </div>
-
         <div class="grid px-4 py-6 sm:px-0 grid-cols-5 gap-6">
           <Card v-for="value in listaProductos"
-          :nombre="value.name" :precio="value.price" :agregar="agregarAlCarrito(value)" :producto="value""></Card>
+          :nombre="value.name" :precio="value.price" :agregar="modificarProducto" :producto="value" textoBoton="modificar"></Card>
         </div>
       </main>
     </div>

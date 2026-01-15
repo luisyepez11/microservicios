@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios';
+import { useRouter } from 'vue-router';
 const permisos = ref([])
+const route = useRouter()
 const tokenGuardado = localStorage.getItem('authToken');
 const cargar = async () =>{
   try {
@@ -15,6 +17,10 @@ permisos.value = response.data.permisos
 console.log(permisos.value)
   } catch (error) {
     console.log(error)
+    
+    route.push({
+      name: 'login'
+    })
   }
 }
 cargar()

@@ -13,6 +13,8 @@ import gestion_producto from "@/views/gestion_producto.vue";
 import UserDetail from "@/views/userDetail.vue";
 import mis_pedidos from "@/views/mis_pedidos.vue";
 import formulario_pago from "@/views/formulario_pago.vue";
+import modificarProductos from "@/views/modificarProductos.vue";
+import registrarLote from "@/views/registrarLote.vue";
 const routes = [
     {
         path: '/',
@@ -55,6 +57,11 @@ const routes = [
         component: addproductos
     },
     {
+        path: '/modificar-product/:id',
+        name: 'modificar-product',
+        component: modificarProductos
+    },
+    {
         path: '/codigo',
         name: 'codigo',
         component: Codigo
@@ -70,6 +77,10 @@ const routes = [
         path:'/formulario_pago/:id',
         name: 'formulario_pago',
         component: formulario_pago
+    },{
+        path:'/registrarLote/:id',
+        name: 'registrarLote',
+        component: registrarLote
     }
 ];
 

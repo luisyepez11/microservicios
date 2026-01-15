@@ -4,7 +4,9 @@ import sideBar from '@/components/sideBar.vue'
 import NavBar from '@/components/navBar.vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router';
-
+const permisosAgregar = ref([])
+const permisosOriginales = ref([])
+const permisoQuitar = ref([])
 const route = useRoute();
 const datos = ref()
 const tokenGuardado = localStorage.getItem('authToken');
@@ -16,10 +18,11 @@ try {
     datos.value= datosUsuarios.data
     permisosDisponibles.value = datosPermiso.data
     permisosAsignados.value = datosPermisosUsario.data.permisos
+    permisosOriginales.value = datosPermisosUsario.data.permisos.map(p=>p)
     usuario.value={
       nombre: 'Nombre del usuario',
       correo: datos.value.correo_usuario,
-      ultimaSesion: 'Último inicio de sesión: --/--/---- --:--',
+      ultimaSesion: `Último inicio de sesión: ${(datos.value.ultima_conexion).split('T')[0]}`,
     }
     console.log(permisosAsignados.value)
 } catch (error) {
@@ -48,16 +51,52 @@ cargar()
 const permisoSeleccionado = ref('')
 
 const agregarPermiso = () => {
-  //lógica para agregar permisoSeleccionado a permisosAsignados
+  permisosAgregar.value.push(permisoSeleccionado.value)
+  permisosAsignados.value.push(permisosDisponibles.value.find(p=> p.id_permiso===permisoSeleccionado.value))
+  permisosDisponibles.value = permisosDisponibles.value.filter(p=>p.id_permiso!==permisoSeleccionado.value)
+  permisoQuitar.value = (permisoQuitar.value.filter(p=>p!==permisoSeleccionado.value))
+  
 }
 
 const quitarPermiso = (permiso) => {
-  //lógica para quitar permiso de permisosAsignados
+  permisoQuitar.value.push(permiso)
+  permisosDisponibles.value.push(permisosAsignados.value.find(p=>p.id_permiso===permiso))
+  permisosAsignados.value = permisosAsignados.value.filter(p=>p.id_permiso!==permiso)
+  permisosAgregar.value = (permisosAgregar.value.filter(p=>p!==permiso))
+
+  
 }
 
 const guardarCambios = () => {
-  //lógica para enviar permisos al backend
+try {
+  
+
+  permisosAsignados.value.map(async p=>{
+   if(permisosOriginales.value.find(pe=>pe.id_permiso===p.id_permiso)===undefined){ 
+    console.log(p)
+    await axios.post(`http://localhost:8001/permisos-usuario`,{
+  id_usuario: route.params.id,
+  id_permiso: p.id_permiso
+})}
+  })
+  permisoQuitar.value.map(async p=>{
+    console.log(p)
+   if(permisosOriginales.value.find(pe=>pe.id_permiso===p)!==undefined){ 
+    console.log({
+  id_usuario: route.params.id,
+  id_permiso: p
+})
+    await axios.delete(`http://localhost:8001/permisos-usuario/`,{
+      params:{
+  id_usuario: route.params.id,
+  id_permiso: p
+}})}
+  })
+  console.log("permisos asignados con exito")
+  } catch (error) {
+  console.log(error)
 }
+} 
 </script>
 
 <template>
@@ -141,7 +180,7 @@ const guardarCambios = () => {
                   <button
                     type="button"
                     class="text-slate-400 hover:text-red-400 transition text-xs"
-                    @click="quitarPermiso(permiso.nombre_permiso)"
+                    @click="quitarPermiso(permiso.id_permiso)"
                     title="Quitar permiso"
                   >
                     ✕
@@ -168,7 +207,7 @@ const guardarCambios = () => {
                   <option value="" disabled>Selecciona un permiso...</option>
                   <option
                     v-for="permiso in permisosDisponibles"
-                    :key="permiso.nombre_permiso"
+                    :key="permiso.id_permiso"
                     :value="permiso.id_permiso"
                   >
                     {{ permiso.nombre_permiso }}
