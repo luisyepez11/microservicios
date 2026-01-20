@@ -41,4 +41,9 @@ public class PedidosProductosServicio {
         }
         return repositorioPedidosProductos.findByPedidos_IdPedido(idPedido);
     }
+
+    @Transactional
+    public List<Object[]> cantidadPedidosProductos(){
+        return repositorioPedidosProductos.countPedidosByProducto();
+    }
 }

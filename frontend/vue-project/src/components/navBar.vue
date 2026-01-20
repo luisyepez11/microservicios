@@ -11,7 +11,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-
+  vista: {
+    type:Boolean,
+    default:false
+  }
 })
 
 // Métodos del carrito
@@ -84,6 +87,7 @@ const cerrarSesion = () => {
           <button
             class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg hover:bg-emerald-400 active:scale-[0.98] transition duration-150 font-semibold shadow-sm hover:shadow-md relative"
             @click="openModal"
+            v-if="vista"
           >
             Carrito
             <!-- Badge con cantidadProducto total de productos -->

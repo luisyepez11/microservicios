@@ -25,7 +25,7 @@ defineProps({
 })
 </script>
 <template>
-  <div
+  <div 
     class="bg-slate-800/80 rounded-2xl shadow-xl border border-slate-700 overflow-hidden max-w-xs mx-auto text-slate-100"
   >
     <div

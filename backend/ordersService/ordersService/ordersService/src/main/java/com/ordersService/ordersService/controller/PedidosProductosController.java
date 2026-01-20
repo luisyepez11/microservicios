@@ -36,10 +36,14 @@ public class PedidosProductosController {
         return servicioPedidosProductos.pedidosProducto(idPedido);
     }
     
-    @PostMapping("pedidosProductos/{idPedido}")
+    @PostMapping("/pedidosProductos/{idPedido}")
     public List<PedidosProductos> postMethodName(@PathVariable UUID idPedido,@RequestBody List<PedidosProductosDTO> productos) {
         
         return servicioPedidosProductos.productosPedidos(productos, idPedido);
+    }
+    @GetMapping("/cantidadPeidosProductos")
+    public List<Object[]> getCantidadPeidosProductos() {
+        return servicioPedidosProductos.cantidadPedidosProductos();
     }
     
 }

@@ -26,6 +26,7 @@ try {
       return p
     });
     listaProductos.value =await Promise.all(CantidadesProductos)
+    listaProductos.value = listaProductos.value.filter(p=>p.stock>0)
 } catch (error) {
     console.log(error)
 }
@@ -76,12 +77,12 @@ const productos = ref([
     <!-- Main Content -->
     <div class="flex-1 ml-40">
       <!-- Navbar -->
-      <NavBar :productos="productos"></NavBar>
+      <NavBar :productos="productos" :vista="true"></NavBar>
 
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         
         <div class="grid px-4 py-6 sm:px-0 grid-cols-5 gap-6">
-          <Card v-for="value in listaProductos"
+          <Card v-for="value in listaProductos" 
           :nombre="value.name" :precio="value.price" :agregar="agregarAlCarrito" :producto="value"></Card>
         </div>
       </main>
